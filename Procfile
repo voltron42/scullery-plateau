@@ -1,0 +1,1 @@
+web: java $JVM_OPTS -cp target/scullery-plateau.jar clojure.main -m scullery-plateau.server
