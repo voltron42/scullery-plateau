@@ -1,7 +1,8 @@
 (ns scullery-plateau.server
   (:require [org.httpkit.server :as http]
             [scullery-plateau.routes :as r]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]])
+  (:gen-class))
 
 (defn -main [& [port]]
   (let [my-app (r/build-app)
