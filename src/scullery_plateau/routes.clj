@@ -25,6 +25,15 @@
         :summary ""
         (r/ok (+ x y)))
 
+      (s/POST "/edn" []
+        :return schema/Any
+        :body [body schema/Any]
+        (r/ok (let [my-type (type body)]
+                (println "body: " body)
+                (println "type: " my-type)
+                my-type
+                )))
+
       (s/POST "/pdf" []
         :body [body String]
         (r/ok (io/piped-input-stream
