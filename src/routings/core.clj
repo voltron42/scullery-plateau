@@ -10,7 +10,7 @@
            (clojure.lang ExceptionInfo)))
 
 (defn- split-path [path-str]
-  (if (= path-str "/") [] (clojure.string/split (clojure.string/join "" (drop 1 path-str)) #"/")))
+  (if (= path-str "/") [] (map #(if (s/starts-with? % ":") (keyword (s/join "" (drop 1 path-str))) %) (s/split (s/join "" (drop 1 path-str)) #"/"))))
 
 (defn- method [req]
   (->> req
@@ -24,6 +24,8 @@
       (= step req-step)))
 
 (defn- match-route [route req]
+  (println route)
+  (println req)
   (and (= (:method req) (:method route))
        (let [{:keys [headers]} route]
          (= (select-keys (:headers req) (keys headers)) headers))
@@ -44,6 +46,9 @@
           (mapv #(-> {:route %1 :req %2}) path req-path)))
 
 (defn- get-route [routing req-path method headers]
+  (println method)
+  (println req-path)
+  (println headers)
   (let [routes (filter (matcher req-path method headers) routing)]
     (if (not= 1 (count routes))
       nil
@@ -52,7 +57,8 @@
 (defn- parse-query [query]
   (reduce
     (fn [out pair]
-      (let [[k v] (s/split pair #"=")]
+      (let [[key v] (s/split pair #"=")
+            k (keyword key)]
         (assoc out k
                    (if (contains? out k)
                      (if (vector? (out k))
@@ -76,15 +82,11 @@
    "application/x-www-form-urlencoded" [parse-query identity]
    "text/plain" [str str]})
 
-(defn- get-body-fn [pos head]
-  (let [Content-Type (head "Content-Type")]
-    (println "headers: " head)
-    (println "Content-Type: " Content-Type)
-    (if (or (nil? Content-Type) (not (contains? mime-types Content-Type)))
-      (do (println "Content-Type not found")
-          identity)
-      (let [result (pos (mime-types Content-Type))]
-        (println "Content-type found: " result)
+(defn- get-body-fn [pos type]
+  (let []
+    (if (or (nil? type) (not (contains? mime-types type)))
+      identity
+      (let [result (pos (mime-types type))]
         result))))
 
 (def ^:private get-body-parser (partial get-body-fn first))
@@ -113,14 +115,17 @@
 (def ^:private build-coercer (partial build-schemafier second identity))
 
 (defn- build-handler [action schema req-head resp-head route-path]
-  (println "req-head: " req-head)
-  (println "resp-head: " resp-head)
-  (let [parse-body (get-body-parser req-head)
-        build-body (get-body-builder resp-head)
+  (let [req-type (req-head :content-type)
+        resp-type (resp-head "content-type")
+        parse-body (get-body-parser req-type)
+        build-body (get-body-builder resp-type)
         validate (build-validator schema)
         coerce (build-coercer schema)]
     (fn [split-uri {:keys [headers body query-string request-method content-type] :as req}]
-      (let [body-str (if (nil? body) "" (slurp body))
+      (let [{:keys [content-type accept]} headers
+            parse-body (if (and (not (nil? content-type)) (not= content-type req-type)) (get-body-parser content-type) parse-body)
+            build-body (if (and (not (nil? accept)) (not= accept resp-type)) (get-body-builder accept) build-body)
+            body-str (if (nil? body) "" (slurp body))
             body (parse-body body-str)
             query (if (nil? query-string) {} (parse-query query-string))
             path (build-path-params route-path split-uri)
@@ -139,16 +144,21 @@
                          (r/internal-server-error (build-body (.getMessage e)))))]
         (assoc response :headers resp-head)))))
 
+(defn- keywordify [my-map]
+  (reduce (fn [out [k v]] (assoc out (keyword k) v)) {} my-map))
+
 (defn- index-routing [routes]
   (reduce
     (fn [routing [method path req-head resp-head schema action]]
-      (assoc routing
-        {:method method
-         :path path
-         :headers req-head}
-        (build-handler action schema req-head resp-head path)))
-    {}
-    routes))
+      (let [path (if (string? path) (split-path path) path)
+            resp-head (if (contains? req-head "Accept") (assoc resp-head "Content-Type" (req-head "Accept")) resp-head)]
+        (assoc routing
+          {:method method
+           :path path
+           :headers req-head}
+          (build-handler action schema (keywordify req-head) resp-head path))))
+      {}
+      routes))
 
 (defn- build-route [method path req-head resp-head schema action]
   [method path req-head resp-head schema action])
@@ -167,6 +177,7 @@
 
 (defn build-api [& routes]
   (let [routing (index-routing routes)]
+    (println routing)
     (fn [req]
       (try
         (let [path (split-path (:uri req))

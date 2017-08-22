@@ -17,7 +17,7 @@
     (let [^InputStream input (->> svg
                                   (xml/emit-element)
                                   (with-out-str)
-                                  (.toByteArray)
+                                  (.getBytes)
                                   (ByteArrayInputStream.))
           [transcoder default-opts hints-map] (types type)]
       (doseq [[option value] (merge default-opts opts)]
@@ -26,5 +26,5 @@
       (.transcode transcoder
                   (TranscoderInput. input)
                   (TranscoderOutput. out))
-      nil)
+      (.flush out))
     (throw (IllegalArgumentException. (format "'%s' is not a valid type." type)))))
