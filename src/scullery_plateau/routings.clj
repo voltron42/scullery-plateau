@@ -4,7 +4,8 @@
 
 (defn build-app []
   (r/build-api
-    (r/GET ["api" "plus"] {} {}
+    (r/GET ["api" "plus"] {}
+           {"Content-Type" "text/plain"}
            {:query [{s/Keyword s/Int} #(reduce (fn [out [k v]] (assoc out (keyword k) (Integer/parseInt v))) {} %)]}
            (fn [{:keys [query]}]
              (let [{:keys [x y]} query]
@@ -18,4 +19,17 @@
             {"Content-Type" "application/edn"}
             {"Content-Type" "application/xml"}
             {:body [s/Any identity]}
-            identity)))
+            identity)
+    (r/GET ["long"]
+           {}
+           {}
+           {}
+           (fn [_]
+             9))
+    (r/GET ["str"]
+           {}
+           {}
+           {}
+           (fn [_]
+             "9"))
+    ))

@@ -76,10 +76,16 @@
    "application/x-www-form-urlencoded" [parse-query identity]
    "text/plain" [str str]})
 
-(defn- get-body-fn [pos {:keys [Content-Type]}]
-  (if (or (nil? Content-Type) (contains? mime-types Content-Type))
-    identity
-    (pos (mime-types Content-Type))))
+(defn- get-body-fn [pos head]
+  (let [Content-Type (head "Content-Type")]
+    (println "headers: " head)
+    (println "Content-Type: " Content-Type)
+    (if (or (nil? Content-Type) (not (contains? mime-types Content-Type)))
+      (do (println "Content-Type not found")
+          identity)
+      (let [result (pos (mime-types Content-Type))]
+        (println "Content-type found: " result)
+        result))))
 
 (def ^:private get-body-parser (partial get-body-fn first))
 
@@ -107,6 +113,8 @@
 (def ^:private build-coercer (partial build-schemafier second identity))
 
 (defn- build-handler [action schema req-head resp-head route-path]
+  (println "req-head: " req-head)
+  (println "resp-head: " resp-head)
   (let [parse-body (get-body-parser req-head)
         build-body (get-body-builder resp-head)
         validate (build-validator schema)
