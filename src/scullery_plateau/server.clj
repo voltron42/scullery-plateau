@@ -1,6 +1,6 @@
 (ns scullery-plateau.server
   (:require [org.httpkit.server :as http]
-            [scullery-plateau.routing :as r]
+            [scullery-plateau.routings :as r]
             [environ.core :refer [env]])
   (:gen-class))
 
