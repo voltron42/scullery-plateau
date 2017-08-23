@@ -151,7 +151,7 @@
 
 (defn- index-routing [routes]
   (reduce
-    (fn [routing [method path req-head resp-head schema action]]
+    (fn [routing {:keys [method path req-head resp-head schema action]}]
       (let [path (if (string? path) (split-path path) path)
             resp-head (if (contains? req-head "Accept") (assoc resp-head "Content-Type" (req-head "Accept")) resp-head)]
         (assoc routing
@@ -162,8 +162,10 @@
       {}
       routes))
 
+(defrecord Route [method path req-head resp-head schema action])
+
 (defn- build-route [method path req-head resp-head schema action]
-  [method path req-head resp-head schema action])
+  (Route. method path req-head resp-head schema action))
 
 (def GET (partial build-route :GET))
 
@@ -177,8 +179,15 @@
 
 (def HEAD (partial build-route :HEAD))
 
+(defn context [path-str & routes]
+  (println path-str)
+  (println (flatten routes))
+  (mapv (fn [{:keys [method path req-head resp-head schema action]}]
+          (Route. method (str path-str path) req-head resp-head schema action))
+        (flatten routes)))
+
 (defn build-api [& routes]
-  (let [routing (index-routing routes)]
+  (let [routing (index-routing (flatten routes))]
     (fn [req]
       (try
         (let [path (split-path (:uri req))

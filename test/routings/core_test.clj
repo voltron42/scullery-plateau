@@ -6,7 +6,7 @@
 
 (deftest test-hello-world-api
   (let [api (build-api
-              (GET "/api/v1/go" {} {} {} (fn [{:keys [query path headers]}] "Hello World!")))
+              (GET "/api/v1/go" {} {} {} (fn [_] "Hello World!")))
         mock-request (mock/request :get "http://localhost/api/v1/go")
         {:keys [status headers body]} (api mock-request)]
     (is (= 200 status))
@@ -28,3 +28,32 @@
     (is (= 200 status))
     (is (= "5" body))))
 
+(deftest test-context-api
+  (let [api (build-api
+              (GET "/a" {} {} {} (fn [_] "a"))
+              (context "/a"
+                       (GET "/b" {} {} {} (fn [_] "a,b"))
+                       (context "/b"
+                                (GET "/c" {} {} {} (fn [_] "a,b,c"))
+                                (GET "/d" {} {} {} (fn [_] "a,b,d")))))]
+    (let [
+          mock-request (mock/request :get "http://localhost/a")
+          {:keys [status headers body]} (api mock-request)]
+      (is (= 200 status))
+      (is (= "a" body)))
+    (let [
+          mock-request (mock/request :get "http://localhost/a/b")
+          {:keys [status headers body]} (api mock-request)]
+      (is (= 200 status))
+      (is (= "a,b" body)))
+    (let [
+          mock-request (mock/request :get "http://localhost/a/b/c")
+          {:keys [status headers body]} (api mock-request)]
+      (is (= 200 status))
+      (is (= "a,b,c" body)))
+    (let [
+          mock-request (mock/request :get "http://localhost/a/b/d")
+          {:keys [status headers body]} (api mock-request)]
+      (is (= 200 status))
+      (is (= "a,b,d" body)))
+    ))
