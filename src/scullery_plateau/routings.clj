@@ -56,4 +56,10 @@
                          (io/piped-input-stream
                            (fn [out]
                              (pdf/pdf body out)))))
+               (r/OPTIONS "/pdf"
+                          {}
+                          {"access-control-allow-origin" "https://voltron42.github.io"}
+                          {}
+                          (fn [_]
+                            ""))
                )))
