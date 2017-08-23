@@ -58,7 +58,9 @@
                              (pdf/pdf body out)))))
                (r/OPTIONS "/pdf"
                           {}
-                          {"access-control-allow-origin" "https://voltron42.github.io"}
+                          {"access-control-allow-origin" "https://voltron42.github.io"
+                           "Access-Control-Allow-Headers" "Content-Type"
+                           "Access-Control-Allow-Methods" "POST"}
                           {}
                           (fn [_]
                             ""))
