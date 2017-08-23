@@ -24,12 +24,14 @@
     (r/context "/api"
                (r/POST "/svg"
                        {"content-type" "application/edn"}
-                       {"content-type" "application/xml"}
+                       {"content-type" "application/xml"
+                        "access-control-allow-origin" "https://voltron42.github.io"}
                        {:body [s/Any identity]}
                        identity)
                (r/POST "/svg/png"
                        {"content-type" "application/edn"}
-                       {"content-type" "image/png"}
+                       {"content-type" "image/png"
+                        "access-control-allow-origin" "https://voltron42.github.io"}
                        {:body [s/Any identity]}
                        (fn [{:keys [body]}]
                          (println body)
@@ -38,7 +40,8 @@
                              (img/rasterize :png {} body out)))))
                (r/POST "/svg/jpeg"
                        {"content-type" "application/edn"}
-                       {"content-type" "image/jpeg"}
+                       {"content-type" "image/jpeg"
+                        "access-control-allow-origin" "https://voltron42.github.io"}
                        {:body [s/Any identity]}
                        (fn [{:keys [body]}]
                          (io/piped-input-stream
@@ -46,7 +49,8 @@
                              (img/rasterize :jpeg {} body out)))))
                (r/POST "/pdf"
                        {"content-type" "application/edn"}
-                       {"content-type" "application/pdf"}
+                       {"content-type" "application/pdf"
+                        "access-control-allow-origin" "https://voltron42.github.io"}
                        {:body [s/Any identity]}
                        (fn [{:keys [body]}]
                          (io/piped-input-stream
