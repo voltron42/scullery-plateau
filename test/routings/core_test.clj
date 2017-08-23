@@ -2,7 +2,11 @@
   (:require [clojure.test :refer :all]
             [routings.core :refer :all]
             [ring.mock.request :as mock]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clj-pdf.core :as pdf]
+            [ring.util.io :as io]
+            [clojure.edn :as edn])
+  (:import (java.io OutputStream)))
 
 (deftest test-hello-world-api
   (let [api (build-api
@@ -57,3 +61,60 @@
       (is (= 200 status))
       (is (= "a,b,d" body)))
     ))
+
+(deftest test-pdf-api
+  (let [api (build-api
+              (POST "/pdf"
+                      {"content-type" "application/edn"}
+                      {"content-type" "application/pdf"}
+                      {:body [s/Any identity]}
+                      (fn [{:keys [body]}]
+                        (io/piped-input-stream
+                          (fn [out]
+                            (pdf/pdf body out))))))
+        mock-request (mock/request :post "http://localhost/pdf")
+        _ (mock/header mock-request "content-type" "application/edn")
+        _ (mock/body mock-request (str [{}
+                                        [:list {:roman true}
+                                         [:chunk {:style :bold} "a bold item"]
+                                         "another item"
+                                         "yet another item"]
+                                        [:phrase "some text"]
+                                        [:phrase "some more text"]
+                                        [:paragraph "yet more text"]]))
+        {:keys [status headers body]} (api mock-request)
+        ]
+    (is (= 200 status))
+    (spit "resources/my.pdf" body)
+    (println "completed")))
+
+(deftest test-pdf-raw-api
+  (let [api (fn [{:keys [body]}]
+              {:status  200
+               :headers {"content-type" "application/pdf"}
+               :body    (let [body-str (if (nil? body) "" (slurp body))
+                              body (edn/read-string body-str)]
+                          (io/piped-input-stream
+                            (fn [^OutputStream out]
+                              (pdf/pdf (edn/read-string body) out)
+                              (.flush out))))})
+        mock-request (mock/request :post "http://localhost/pdf")
+        mock-request (mock/header mock-request "content-type" "application/edn")
+        mock-request (mock/header mock-request "accept" "application/pdf")
+        mock-request (mock/body mock-request
+                                (str [{}
+                                      [:list {:roman true}
+                                       [:chunk {:style :bold} "a bold item"]
+                                       "another item"
+                                       "yet another item"]
+                                      [:phrase "some text"]
+                                      [:phrase "some more text"]
+                                      [:paragraph "yet more text"]]))
+        _ (println mock-request)
+        {:keys [status headers body] :as response} (api mock-request)
+        _ (println response)
+        ]
+    (is (= 200 status))
+    (spit "resources/my.pdf" body)
+    (.close body)
+    (println "completed")))
