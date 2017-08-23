@@ -16,5 +16,7 @@
   :plugins [[environ/environ.lein "0.3.1"]]
   :hooks [environ.leiningen.hooks]
   :uberjar-name "scullery-plateau.jar"
-  :profiles {:production {:env {:production true}}}
+  :resource-paths ["resources"]
+  :profiles {:production {:env {:production true}
+                          :resource-paths ["resources"]}}
   )
