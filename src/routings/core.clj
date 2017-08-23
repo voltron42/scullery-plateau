@@ -24,8 +24,6 @@
       (= step req-step)))
 
 (defn- match-route [route req]
-  (println route)
-  (println req)
   (and (= (:method req) (:method route))
        (let [{:keys [headers]} route]
          (= (select-keys (:headers req) (keys headers)) headers))
@@ -46,9 +44,6 @@
           (mapv #(-> {:route %1 :req %2}) path req-path)))
 
 (defn- get-route [routing req-path method headers]
-  (println method)
-  (println req-path)
-  (println headers)
   (let [routes (filter (matcher req-path method headers) routing)]
     (if (not= 1 (count routes))
       nil
@@ -112,7 +107,14 @@
 
 (def ^:private build-validator (partial build-schemafier #(partial schema/validate (first %)) (constantly nil)))
 
-(def ^:private build-coercer (partial build-schemafier second identity))
+(defn coercify [coercer]
+  (if (map? coercer)
+    (let [new-map (reduce (fn [out [k v]] (assoc out k (coercify v))) {} coercer)]
+      (fn [input]
+        (reduce (fn [out [k v]] (assoc out k (v (input k)))) {} new-map)))
+    coercer))
+
+(def ^:private build-coercer (partial build-schemafier #(coercify (second %)) identity))
 
 (defn- build-handler [action schema req-head resp-head route-path]
   (let [req-type (req-head :content-type)
@@ -177,7 +179,6 @@
 
 (defn build-api [& routes]
   (let [routing (index-routing routes)]
-    (println routing)
     (fn [req]
       (try
         (let [path (split-path (:uri req))
