@@ -3,65 +3,56 @@
             [schema.core :as s]
             [scullery-plateau.raster :as img]
             [ring.util.io :as io]
-            [clj-pdf.core :as pdf]))
+            [clj-pdf.core :as pdf]
+            [clojure.edn :as edn])
+  (:import (java.io File OutputStream)
+           (java.net URLDecoder)))
 
 (defn- parse-int [val] (Integer/parseInt val))
 
 (defn build-app []
-  (r/build-api
-    (r/context "/sample"
-               (r/GET "/plus" {}
-                      {"content-type" "text/plain"}
-                      {:query [{:x s/Int :y s/Int} {:x parse-int :y parse-int}]}
-                      (fn [{:keys [query]}]
-                        (let [{:keys [x y]} query]
-                          (+ x y))))
-               (r/POST "/edn"
-                       {"content-type" "application/edn"}
-                       {"content-type" "text/plain"}
-                       {:body [s/Any identity]}
-                       #(type %)))
-    (r/context "/api"
-               (r/POST "/svg"
-                       {"content-type" "application/edn"}
-                       {"content-type" "application/xml"
-                        "access-control-allow-origin" "https://voltron42.github.io"}
-                       {:body [s/Any identity]}
-                       identity)
-               (r/POST "/svg/png"
-                       {"content-type" "application/edn"}
-                       {"content-type" "image/png"
-                        "access-control-allow-origin" "https://voltron42.github.io"}
-                       {:body [s/Any identity]}
-                       (fn [{:keys [body]}]
-                         (println body)
-                         (io/piped-input-stream
-                           (fn [out]
-                             (img/rasterize :png {} body out)))))
-               (r/POST "/svg/jpeg"
-                       {"content-type" "application/edn"}
-                       {"content-type" "image/jpeg"
-                        "access-control-allow-origin" "https://voltron42.github.io"}
-                       {:body [s/Any identity]}
-                       (fn [{:keys [body]}]
-                         (io/piped-input-stream
-                           (fn [out]
-                             (img/rasterize :jpeg {} body out)))))
-               (r/POST "/pdf"
-                       {"content-type" "application/edn"}
-                       {"content-type" "application/pdf"
-                        "access-control-allow-origin" "https://voltron42.github.io"}
-                       {:body [s/Any identity]}
-                       (fn [{:keys [body]}]
-                         (io/piped-input-stream
-                           (fn [out]
-                             (pdf/pdf body out)))))
-               (r/OPTIONS "/pdf"
-                          {}
-                          {"access-control-allow-origin" "https://voltron42.github.io"
-                           "Access-Control-Allow-Headers" "Content-Type"
-                           "Access-Control-Allow-Methods" "POST"}
-                          {}
-                          (fn [_]
-                            ""))
-               )))
+  (r/static "/local" "/resources/web"
+            (r/build-api
+              (r/context "/sample"
+                         (r/GET "/plus" {}
+                                {"content-type" "text/plain"}
+                                {:query [{:x s/Int :y s/Int} {:x parse-int :y parse-int}]}
+                                (fn [{:keys [query]}]
+                                  (let [{:keys [x y]} query]
+                                    (+ x y)))))
+              (r/context "/api"
+                         (r/context "/svg"
+                                    (r/POST "/png"
+                                            {"content-type" "application/x-www-form-urlencoded"}
+                                            {"content-type" "image/png"}
+                                            {:body [s/Any identity]}
+                                            (fn [{:keys [body]}]
+                                              (let [{:keys [pdf]} body
+                                                    pdf (edn/read-string (URLDecoder/decode pdf))]
+                                                (io/piped-input-stream
+                                                  (fn [out]
+                                                    (img/rasterize :png {} pdf out)
+                                                    (.flush out))))))
+                                    (r/POST "/jpeg"
+                                            {"content-type" "application/x-www-form-urlencoded"}
+                                            {"content-type" "image/jpeg"}
+                                            {:body [s/Any identity]}
+                                            (fn [{:keys [body]}]
+                                              (let [{:keys [pdf]} body
+                                                    pdf (edn/read-string (URLDecoder/decode pdf))]
+                                                (io/piped-input-stream
+                                                  (fn [out]
+                                                    (img/rasterize :jpeg {} pdf out)
+                                                    (.flush out)))))))
+                         (r/POST "/pdf"
+                                 {"content-type" "application/x-www-form-urlencoded"}
+                                 {"content-type" "application/pdf"}
+                                 {:body [s/Any identity]}
+                                 (fn [{:keys [body]}]
+                                   (let [{:keys [pdf]} body
+                                         pdf (edn/read-string (URLDecoder/decode pdf))]
+                                     (io/piped-input-stream
+                                       (fn [^OutputStream out]
+                                         (pdf/pdf pdf out)
+                                         (.flush out))))))
+                         ))))

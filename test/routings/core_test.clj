@@ -6,7 +6,8 @@
             [clj-pdf.core :as pdf]
             [ring.util.io :as io]
             [clojure.edn :as edn])
-  (:import (java.io OutputStream)))
+  (:import (java.io OutputStream File)
+           (java.net URLEncoder URLDecoder)))
 
 (deftest test-hello-world-api
   (let [api (build-api
@@ -118,3 +119,57 @@
     (spit "resources/my.pdf" body)
     (.close body)
     (println "completed")))
+
+(deftest test-pdf-redirect
+  (let [api (build-api
+              (POST "/pdf"
+                    {"content-type" "application/x-www-form-urlencoded"}
+                    {"content-type" "text/html"}
+                    {:body [s/Any identity]}
+                    (fn [{:keys [body headers]}]
+                      (println "body: " body)
+                      (println "headers: " headers)
+                      (try
+                        (let [dir (File. "resources/web/tmp")
+                              _ (.mkdir dir)
+                              ^File file (File/createTempFile "gen" ".pdf" dir)
+                              filename (.getName file)
+                              {:keys [pdf]} body
+                              _ (println "pdf: " pdf)
+                              pdf (edn/read-string (URLDecoder/decode pdf))]
+                          (println "pdf: " pdf)
+                          (pdf/pdf pdf (.getAbsolutePath file))
+                          {:tag :html
+                           :content [{
+                                      :tag :head
+                                      :content [{
+                                                 :tag :meta
+                                                 :attrs {
+                                                         :http-equiv "refresh"
+                                                         :content (str "0; url=/local/tmp/" filename)
+                                                         }
+                                                 }]
+                                      }]}
+                          )
+                        (catch Exception e
+                          (println e)
+                          (.printStackTrace e)
+                          ))
+                      )))
+        mock-request (mock/request :post "http://localhost/pdf")
+        mock-request (mock/header mock-request "content-type" "application/x-www-form-urlencoded")
+        request-body (str "pdf=" (URLEncoder/encode (str [{}
+                                                          [:list {:roman true}
+                                                           [:chunk {:style :bold} "a bold item"]
+                                                           "another item"
+                                                           "yet another item"]
+                                                          [:phrase "some text"]
+                                                          [:phrase "some more text"]
+                                                          [:paragraph "yet more text"]])))
+        _ (println request-body)
+        mock-request (mock/body mock-request request-body)
+        {:keys [status headers body] :as response} (api mock-request)]
+    (println status)
+    (println headers)
+    (println body)
+    ))

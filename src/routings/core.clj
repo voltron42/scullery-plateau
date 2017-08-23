@@ -6,7 +6,7 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [schema.core :as schema])
-  (:import (java.io ByteArrayInputStream)
+  (:import (java.io ByteArrayInputStream FileInputStream)
            (clojure.lang ExceptionInfo)))
 
 (defn- split-path [path-str]
@@ -63,15 +63,18 @@
     {}
     (s/split query #"&")))
 
+(def ^:private xml-tf [#(->> %
+                             (.getBytes)
+                             (ByteArrayInputStream.)
+                             (xml/parse)
+                             (zip/xml-zip))
+                       #(with-out-str (xml/emit-element %))])
+
 (def ^:private mime-types
   {"application/json"                  [json/parse-string
                                         json/generate-string]
-   "application/xml"                   [#(->> %
-                                              (.getBytes)
-                                              (ByteArrayInputStream.)
-                                              (xml/parse)
-                                              (zip/xml-zip))
-                                        #(with-out-str (xml/emit-element %))]
+   "application/xml"                   xml-tf
+   "text/html"                   xml-tf
    "application/edn"                   [edn/read-string
                                         str]
    "application/x-www-form-urlencoded" [parse-query identity]
@@ -198,3 +201,18 @@
         (catch Throwable t
           (println (.getMessage t))
           (.printStackTrace t))))))
+
+(defn static [path dir api]
+  (let [path (split-path path)
+        dir (split-path dir)]
+    (fn [req]
+      (let [uri (split-path (:uri req))]
+        (if (and (< (count path) (count uri))
+                 (every? (partial apply =) (mapv vector path uri)))
+          (try
+            {:status 200
+             :body   (FileInputStream. (s/join "/" (concat dir (drop (count path) uri))))}
+            (catch ExceptionInfo e
+              {:status 404
+               :body (.getData e)}))
+          (api req))))))
