@@ -6,7 +6,7 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [schema.core :as schema])
-  (:import (java.io ByteArrayInputStream FileInputStream)
+  (:import (java.io ByteArrayInputStream FileInputStream PipedOutputStream PipedInputStream)
            (clojure.lang ExceptionInfo)))
 
 (defn- split-path [path-str]
@@ -216,3 +216,12 @@
               {:status 404
                :body (.getData e)}))
           (api req))))))
+
+(defn pipe [func]
+  (let [input  (PipedInputStream.)
+        output (PipedOutputStream.)]
+    (.connect input output)
+    (try
+      (func output)
+      (finally (.close output)))
+    input))
