@@ -27,22 +27,22 @@
                                             {"content-type" "image/png"}
                                             {:body [s/Any identity]}
                                             (fn [{:keys [body]}]
-                                              (let [{:keys [pdf]} body
-                                                    pdf (edn/read-string (URLDecoder/decode pdf))]
+                                              (let [{:keys [svg]} body
+                                                    svg (edn/read-string (URLDecoder/decode svg))]
                                                 (io/piped-input-stream
                                                   (fn [out]
-                                                    (img/rasterize :png {} pdf out)
+                                                    (img/rasterize :png {} svg out)
                                                     (.flush out))))))
                                     (r/POST "/jpeg"
                                             {"content-type" "application/x-www-form-urlencoded"}
                                             {"content-type" "image/jpeg"}
                                             {:body [s/Any identity]}
                                             (fn [{:keys [body]}]
-                                              (let [{:keys [pdf]} body
-                                                    pdf (edn/read-string (URLDecoder/decode pdf))]
+                                              (let [{:keys [svg]} body
+                                                    svg (edn/read-string (URLDecoder/decode svg))]
                                                 (io/piped-input-stream
                                                   (fn [out]
-                                                    (img/rasterize :jpeg {} pdf out)
+                                                    (img/rasterize :jpeg {} svg out)
                                                     (.flush out)))))))
                          (r/POST "/pdf"
                                  {"content-type" "application/x-www-form-urlencoded"}
