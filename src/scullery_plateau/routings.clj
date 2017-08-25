@@ -11,8 +11,8 @@
 (defn- parse-int [val] (Integer/parseInt val))
 
 (defn build-app []
-  (r/static "/local" "/resources/web"
             (r/build-api
+              {"/local" "/resources/web"}
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
@@ -55,4 +55,4 @@
                                        (fn [^OutputStream out]
                                          (pdf/pdf pdf out)
                                          (.flush out))))))
-                         ))))
+                         )))

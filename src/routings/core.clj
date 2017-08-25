@@ -189,30 +189,35 @@
           (Route. method (str path-str path) req-head resp-head schema action))
         (flatten routes)))
 
-(defn build-api [& routes]
-  (let [routing (index-routing (flatten routes))]
+(defn build-static-processor [statics wrapped]
+  (let [my-map (reduce (fn [out [k v]] (assoc out (split-path k) (split-path v))) {} statics)]
     (fn [req]
-      (try
-        (let [path (split-path (:uri req))
-              route (get-route routing path (method req) (:headers req))]
-          (if (nil? route)
-            {:status 404 :body (str "Not Found")}
-            (route path req)))
-        (catch Throwable t
-          (println (.getMessage t))
-          (.printStackTrace t))))))
+      (let [uri (split-path {:uri req})
+            path (first (filter (fn [[k _]] (and (< (count k) (count uri))
+                                                 (every? (partial apply =) (mapv vector k uri))))))]
+        (if (path)
+          (let [[dir coerce] (my-map path)
+                src (s/join "/" (concat dir (drop (count path) uri)))]
+            (try
+              {:status 200 :body (coerce src)}
+              (catch Exception e
+                {:status 404 :body "Not Found"})))
+          (wrapped req)))
+      (filter () my-map))))
 
-(defn static [path dir api]
-  (let [path (split-path path)
-        dir (split-path dir)]
-    (fn [req]
-      (let [uri (split-path (:uri req))]
-        (if (and (< (count path) (count uri))
-                 (every? (partial apply =) (mapv vector path uri)))
-          (try
-            {:status 200
-             :body   (FileInputStream. (s/join "/" (concat dir (drop (count path) uri))))}
-            (catch ExceptionInfo e
-              {:status 404
-               :body (.getData e)}))
-          (api req))))))
+(defn build-api [& routes]
+  (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
+        routing (index-routing (flatten routes))]
+    (build-static-processor static
+                            (fn [req]
+                              (try
+                                (let [path (split-path (:uri req))
+                                      route (get-route routing path (method req) (:headers req))]
+                                  (if (nil? route)
+                                    {:status 404 :body (str "Not Found")}
+                                    (route path req)))
+                                (catch Throwable t
+                                  (println (.getMessage t))
+                                  (.printStackTrace t)))))))
+
+
