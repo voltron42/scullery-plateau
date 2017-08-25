@@ -4,9 +4,10 @@
             [ring.mock.request :as mock]
             [schema.core :as s]
             [clj-pdf.core :as pdf]
-            [ring.util.io :as io]
-            [clojure.edn :as edn])
-  (:import (java.io OutputStream File)
+            [clojure.edn :as edn]
+            [scullery-plateau.raster :as img]
+            [clojure.java.io :as io])
+  (:import (java.io OutputStream File FileOutputStream ByteArrayOutputStream ByteArrayInputStream)
            (java.net URLEncoder URLDecoder)))
 
 (deftest test-hello-world-api
@@ -63,113 +64,128 @@
       (is (= "a,b,d" body)))
     ))
 
-(deftest test-pdf-api
+(deftest test-api-png
   (let [api (build-api
-              (POST "/pdf"
-                      {"content-type" "application/edn"}
-                      {"content-type" "application/pdf"}
-                      {:body [s/Any identity]}
-                      (fn [{:keys [body]}]
-                        (io/piped-input-stream
-                          (fn [out]
-                            (pdf/pdf body out))))))
-        mock-request (mock/request :post "http://localhost/pdf")
-        _ (mock/header mock-request "content-type" "application/edn")
-        _ (mock/body mock-request (str [{}
-                                        [:list {:roman true}
-                                         [:chunk {:style :bold} "a bold item"]
-                                         "another item"
-                                         "yet another item"]
-                                        [:phrase "some text"]
-                                        [:phrase "some more text"]
-                                        [:paragraph "yet more text"]]))
-        {:keys [status headers body]} (api mock-request)
-        ]
-    (is (= 200 status))
-    (spit "resources/my.pdf" body)
-    (println "completed")))
-
-(deftest test-pdf-raw-api
-  (let [api (fn [{:keys [body]}]
-              {:status  200
-               :headers {"content-type" "application/pdf"}
-               :body    (let [body-str (if (nil? body) "" (slurp body))
-                              body (edn/read-string body-str)]
-                          (io/piped-input-stream
-                            (fn [^OutputStream out]
-                              (pdf/pdf (edn/read-string body) out)
-                              (.flush out))))})
-        mock-request (mock/request :post "http://localhost/pdf")
-        mock-request (mock/header mock-request "content-type" "application/edn")
-        mock-request (mock/header mock-request "accept" "application/pdf")
-        mock-request (mock/body mock-request
-                                (str [{}
-                                      [:list {:roman true}
-                                       [:chunk {:style :bold} "a bold item"]
-                                       "another item"
-                                       "yet another item"]
-                                      [:phrase "some text"]
-                                      [:phrase "some more text"]
-                                      [:paragraph "yet more text"]]))
-        _ (println mock-request)
-        {:keys [status headers body] :as response} (api mock-request)
-        _ (println response)
-        ]
-    (is (= 200 status))
-    (spit "resources/my.pdf" body)
-    (.close body)
-    (println "completed")))
-
-(deftest test-pdf-redirect
-  (let [api (build-api
-              (POST "/pdf"
+              (POST "/png"
                     {"content-type" "application/x-www-form-urlencoded"}
-                    {"content-type" "text/html"}
+                    {"content-type" "image/png"}
                     {:body [s/Any identity]}
-                    (fn [{:keys [body headers]}]
-                      (println "body: " body)
-                      (println "headers: " headers)
-                      (try
-                        (let [dir (File. "resources/web/tmp")
-                              _ (.mkdir dir)
-                              ^File file (File/createTempFile "gen" ".pdf" dir)
-                              filename (.getName file)
-                              {:keys [pdf]} body
-                              _ (println "pdf: " pdf)
-                              pdf (edn/read-string (URLDecoder/decode pdf))]
-                          (println "pdf: " pdf)
-                          (pdf/pdf pdf (.getAbsolutePath file))
-                          {:tag :html
-                           :content [{
-                                      :tag :head
-                                      :content [{
-                                                 :tag :meta
-                                                 :attrs {
-                                                         :http-equiv "refresh"
-                                                         :content (str "0; url=/local/tmp/" filename)
-                                                         }
-                                                 }]
-                                      }]}
-                          )
-                        (catch Exception e
-                          (println e)
-                          (.printStackTrace e)
-                          ))
-                      )))
-        mock-request (mock/request :post "http://localhost/pdf")
+                    (fn [{:keys [body]}]
+                        (let [{:keys [svg]} body
+                              svg (edn/read-string (URLDecoder/decode svg))
+                              out (ByteArrayOutputStream.)]
+                              (img/rasterize :png {} svg out)
+                              (ByteArrayInputStream. (.toByteArray out))))))
+        mock-request (mock/request :post "http://localhost/png")
         mock-request (mock/header mock-request "content-type" "application/x-www-form-urlencoded")
-        request-body (str "pdf=" (URLEncoder/encode (str [{}
-                                                          [:list {:roman true}
-                                                           [:chunk {:style :bold} "a bold item"]
-                                                           "another item"
-                                                           "yet another item"]
-                                                          [:phrase "some text"]
-                                                          [:phrase "some more text"]
-                                                          [:paragraph "yet more text"]])))
-        _ (println request-body)
-        mock-request (mock/body mock-request request-body)
-        {:keys [status headers body] :as response} (api mock-request)]
+        mock-request (mock/body mock-request (format "svg=%s" (str {:tag :svg
+                                                                    :attrs {:width "200"
+                                                                            :height "200"
+                                                                            :xmlns "http://www.w3.org/2000/svg"}
+                                                                    :content [{
+                                                                               :tag :rect
+                                                                               :attrs {:x "50"
+                                                                                       :y "50"
+                                                                                       :width "100"
+                                                                                       :height "100"
+                                                                                       :stroke "black"
+                                                                                       :stroke-width "5"
+                                                                                       :fill "green"}
+                                                                               },{
+                                                                                  :tag :circle
+                                                                                  :attrs {:cx "100"
+                                                                                          :cy "100"
+                                                                                          :r "25"
+                                                                                          :stroke "purple"
+                                                                                          :stroke-width "5"
+                                                                                          :fill "orange"}}]})))
+        _ (println mock-request)
+        {:keys [status body headers]} (time (api mock-request))
+        _ (println "finished sending request")]
     (println status)
     (println headers)
-    (println body)
+    (io/copy body (FileOutputStream. "resources/out.png"))))
+
+(deftest test-png
+  (time
+    (img/rasterize :png {}
+                   {:tag :svg
+                    :attrs {:width "200"
+                            :height "200"
+                            :xmlns "http://www.w3.org/2000/svg"}
+                    :content [{
+                               :tag :rect
+                               :attrs {:x "50"
+                                       :y "50"
+                                       :width "100"
+                                       :height "100"
+                                       :stroke "black"
+                                       :stroke-width "5"
+                                       :fill "green"}
+                               },{
+                                  :tag :circle
+                                  :attrs {:cx "100"
+                                          :cy "100"
+                                          :r "25"
+                                          :stroke "purple"
+                                          :stroke-width "5"
+                                          :fill "orange"}}]}
+                   (FileOutputStream. "resources/tmp.png"))))
+
+(deftest test-piped-png
+  (spit "resources/piped.png"
+        (pipe (fn [out]
+                (time
+                  (img/rasterize :png {}
+                                 {:tag :svg
+                                  :attrs {:width "200"
+                                          :height "200"
+                                          :xmlns "http://www.w3.org/2000/svg"}
+                                  :content [{
+                                             :tag :rect
+                                             :attrs {:x "50"
+                                                     :y "50"
+                                                     :width "100"
+                                                     :height "100"
+                                                     :stroke "black"
+                                                     :stroke-width "5"
+                                                     :fill "green"}
+                                             },{
+                                                :tag :circle
+                                                :attrs {:cx "100"
+                                                        :cy "100"
+                                                        :r "25"
+                                                        :stroke "purple"
+                                                        :stroke-width "5"
+                                                        :fill "orange"}}]}
+                                 out))))))
+
+(deftest test-png-bytes
+  (let [out (ByteArrayOutputStream.)]
+    (img/rasterize :png {}
+                   {:tag :svg
+                    :attrs {:width "200"
+                            :height "200"
+                            :xmlns "http://www.w3.org/2000/svg"}
+                    :content [{
+                               :tag :rect
+                               :attrs {:x "50"
+                                       :y "50"
+                                       :width "100"
+                                       :height "100"
+                                       :stroke "black"
+                                       :stroke-width "5"
+                                       :fill "green"}
+                               },{
+                                  :tag :circle
+                                  :attrs {:cx "100"
+                                          :cy "100"
+                                          :r "25"
+                                          :stroke "purple"
+                                          :stroke-width "5"
+                                          :fill "orange"}}]}
+                   out)
+    (println (.size out))
+    (io/copy (ByteArrayInputStream. (.toByteArray out))
+             (FileOutputStream. "resources/bytes.png"))
     ))

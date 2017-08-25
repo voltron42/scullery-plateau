@@ -194,7 +194,7 @@
     (fn [req]
       (let [uri (split-path {:uri req})
             path (first (filter (fn [[k _]] (and (< (count k) (count uri))
-                                                 (every? (partial apply =) (mapv vector k uri))))))]
+                                                 (every? (partial apply =) (mapv vector k uri)))) my-map))]
         (if (path)
           (let [[dir coerce] (my-map path)
                 src (s/join "/" (concat dir (drop (count path) uri)))]
@@ -202,8 +202,7 @@
               {:status 200 :body (coerce src)}
               (catch Exception e
                 {:status 404 :body "Not Found"})))
-          (wrapped req)))
-      (filter () my-map))))
+          (wrapped req))))))
 
 (defn build-api [& routes]
   (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
@@ -219,5 +218,3 @@
                                 (catch Throwable t
                                   (println (.getMessage t))
                                   (.printStackTrace t)))))))
-
-

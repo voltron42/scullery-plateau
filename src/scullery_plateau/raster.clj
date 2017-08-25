@@ -13,18 +13,22 @@
                                                             :width [JPEGTranscoder/KEY_WIDTH float]}]})
 
 (defn rasterize [type opts svg ^OutputStream out]
+  (println svg)
   (if (contains? types type)
     (let [^InputStream input (->> svg
                                   (xml/emit-element)
                                   (with-out-str)
                                   (.getBytes)
                                   (ByteArrayInputStream.))
-          [transcoder default-opts hints-map] (types type)]
+          _ (println "created stream")
+          [transcoder default-opts hints-map] (types type)
+          _ (println "fetched transcoder")]
       (doseq [[option value] (merge default-opts opts)]
         (when-let [[opt-key coerce] (-> option keyword hints-map)]
           (.addTranscodingHint transcoder opt-key (coerce value))))
+      (println "added hints")
       (.transcode transcoder
                   (TranscoderInput. input)
                   (TranscoderOutput. out))
-      (.flush out))
+      (println "transcoding completed, flushing outstream"))
     (throw (IllegalArgumentException. (format "'%s' is not a valid type." type)))))
