@@ -209,6 +209,7 @@
         routing (index-routing (flatten routes))]
     (build-static-processor static
                             (fn [req]
+                              (println req)
                               (try
                                 (let [path (split-path (:uri req))
                                       route (get-route routing path (method req) (:headers req))]

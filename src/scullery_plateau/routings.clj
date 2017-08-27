@@ -50,4 +50,9 @@
                                      (io/piped-input-stream
                                        (fn [^OutputStream out]
                                          (pdf/pdf pdf out)
-                                         (.flush out)))))))))
+                                         (.flush out))))))
+                         (r/POST "/form"
+                                 {"content-type" "application/x-www-form-urlencoded"}
+                                 {"content-type" "application/json"}
+                                 {}
+                                 identity))))
