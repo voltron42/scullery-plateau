@@ -15,7 +15,7 @@
 (add-encoder File #(.writeString ^JsonGenerator %2 (.getAbsolutePath %1)))
 
 (defn- split-path [path-str]
-  (if (= path-str "/") [] (map #(if (s/starts-with? % ":") (keyword (s/join "" (drop 1 path-str))) %) (s/split (s/join "" (drop 1 path-str)) #"/"))))
+  (if (= path-str "/") [] (map #(if (s/starts-with? % ":") (keyword (s/join "" (drop 1 %))) %) (s/split (s/join "" (drop 1 path-str)) #"/"))))
 
 (defn- method [req]
   (->> req
@@ -41,6 +41,8 @@
       matches?)))
 
 (defn- build-path-params [path req-path]
+  (println "route: " path)
+  (println "req: " req-path)
   (reduce (fn [params {:keys [route req]}]
             (if (keyword? route)
               (assoc params route req)
@@ -134,19 +136,12 @@
         wrap-request (if is-multipart? multipart-params-request identity)]
     (fn [split-uri req]
       (let [req (wrap-request req)
-            _ (mapv println (dissoc req :headers))
-            _ (println "headers")
-            _ (mapv println (req :headers))
             {:keys [headers body query-string request-method content-type multipart-params]} req
             {:keys [content-type accept]} headers
             parse-body (if (and (not (nil? content-type)) (not= content-type req-type)) (get-body-parser content-type) parse-body)
             build-body (if (and (not (nil? accept)) (not= accept resp-type)) (get-body-builder accept) build-body)
             body-str (if (nil? body) "" (slurp body))
-            _ (println "")
-            _ (println body-str)
             body (parse-body body-str)
-            _ (println "")
-            _ (println body)
             query (if (nil? query-string) {} (parse-query query-string))
             path (build-path-params route-path split-uri)
             new-req (coerce {:query query

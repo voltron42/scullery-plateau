@@ -1,0 +1,6 @@
+{:colorpicker {:title "Color Picker"
+               :script "../script/color.js"
+               :on-load "ctrl.init()"}
+ :letterer {:title "Letterer"
+            :script "../script/letterer.js"
+            :on-load "startup()"}}

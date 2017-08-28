@@ -6,7 +6,9 @@
             [clj-pdf.core :as pdf]
             [clojure.edn :as edn]
             [clojure.xml :as xml]
-            [clojure.zip :as zip])
+            [clojure.zip :as zip]
+            [template.core :as tpl]
+            [xml-short.core :as short])
   (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream)
            (java.net URLDecoder)))
 
@@ -20,9 +22,13 @@
       (img/rasterize :png {} svg out)
       (ByteArrayInputStream. (.toByteArray out)))))
 
+(def ^:private page404 "Not Found")
+
+(def ^:private build-template (tpl/build-template-factory {}))
+
 (defn build-app []
             (r/build-api
-              {"/local" ["/resources/web"]}
+              {"/script" ["/resources/js"]}
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
@@ -30,6 +36,25 @@
                                 (fn [{:keys [query]}]
                                   (let [{:keys [x y]} query]
                                     (+ x y)))))
+              (r/context "/apps"
+                         (r/GET "/:app"
+                                {}
+                                {"content-type" "text/html"}
+                                {:path [{:app s/Keyword} {:app keyword}]}
+                                (fn [{:keys [path]}]
+                                  (let [apps (->> "resources/tpl/apps.edn" (slurp) (edn/read-string))
+                                        {:keys [app]} path]
+                                    (if-not (contains? apps app)
+                                      page404
+                                      (let [tpl (->> "resources/tpl/index.edn"
+                                                     (slurp)
+                                                     (edn/read-string)
+                                                     (build-template))]
+                                        (->> (apps app)
+                                             (tpl)
+                                             (short/x-pand)
+                                             (xml/emit-element)
+                                             (with-out-str))))))))
               (r/context "/api"
                          (r/context "/svg"
                                     (r/POST "/png"

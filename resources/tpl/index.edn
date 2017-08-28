@@ -1,0 +1,6 @@
+[html
+ [head
+  [title :title]
+  [script {src "../script/docbuilder.js"} " "]
+  [script {src :script} " "]]
+ [body {onLoad :on-load} " "]]
