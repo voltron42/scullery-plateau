@@ -4,13 +4,14 @@ function startup() {
     attrs: {
       action: "/api/form",
       method: "post",
-      enctype: "multipart/form-data"
+      enctype: "multipart/form-data",
       target: "_blank"
     },
     children: [{
-      tag: "file",
+      tag: "input",
       attrs: {
-          name: "file"
+          name: "file",
+          type: "file"
       }
     },{ tag: "br" },{
       tag: "input",

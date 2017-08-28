@@ -4,7 +4,9 @@
             [scullery-plateau.raster :as img]
             [ring.util.io :as io]
             [clj-pdf.core :as pdf]
-            [clojure.edn :as edn])
+            [clojure.edn :as edn]
+            [clojure.xml :as xml]
+            [clojure.zip :as zip])
   (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream)
            (java.net URLDecoder)))
 
@@ -20,7 +22,7 @@
 
 (defn build-app []
             (r/build-api
-              {"/local" "/resources/web"}
+              {"/local" ["/resources/web"]}
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
@@ -51,8 +53,14 @@
                                        (fn [^OutputStream out]
                                          (pdf/pdf pdf out)
                                          (.flush out))))))
-                         (r/POST "/form"
-                                 {"content-type" "application/x-www-form-urlencoded"}
+                         (r/Multipart "/form"
+                                 {}
                                  {"content-type" "application/json"}
                                  {}
-                                 identity))))
+                                 (fn [{:keys [headers multipart]}]
+                                   (let [contents (->> multipart
+                                                       :file
+                                                       :tempfile
+                                                       (slurp))]
+                                     {:multipart multipart
+                                      :contents contents}))))))

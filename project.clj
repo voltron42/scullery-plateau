@@ -8,15 +8,16 @@
                  [environ "1.0.0"]
                  [org.clojars.pallix/batik "1.7.0"]
                  [metosin/ring-http-response "0.8.0"]
+                 [ring/ring-core "1.6.2"]
                  [clj-pdf "2.2.29"]
                  [prismatic/schema "1.1.6"]
                  [cheshire "5.8.0"]
-                 [ring-mock "0.1.5"]]
+                 [ring-mock "0.1.5"]
+                 [javax.servlet/javax.servlet-api "3.1.0"]]
   :min-lein-version "2.0.0"
   :plugins [[environ/environ.lein "0.3.1"]]
   :hooks [environ.leiningen.hooks]
   :uberjar-name "scullery-plateau.jar"
   :resource-paths ["resources"]
   :profiles {:production {:env {:production true}
-                          :resource-paths ["resources"]}}
-  )
+                          :resource-paths ["resources"]}})

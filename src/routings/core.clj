@@ -5,9 +5,14 @@
             [clojure.edn :as edn]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
-            [schema.core :as schema])
-  (:import (java.io ByteArrayInputStream FileInputStream)
-           (clojure.lang ExceptionInfo)))
+            [schema.core :as schema]
+            [ring.middleware.multipart-params :refer [multipart-params-request]]
+            [cheshire.generate :refer [add-encoder encode-str remove-encoder]])
+  (:import (java.io ByteArrayInputStream FileInputStream File)
+           (clojure.lang ExceptionInfo)
+           (com.fasterxml.jackson.core JsonGenerator)))
+
+(add-encoder File #(.writeString ^JsonGenerator %2 (.getAbsolutePath %1)))
 
 (defn- split-path [path-str]
   (if (= path-str "/") [] (map #(if (s/starts-with? % ":") (keyword (s/join "" (drop 1 path-str))) %) (s/split (s/join "" (drop 1 path-str)) #"/"))))
@@ -103,10 +108,10 @@
 (defn build-schemafier [pos default-fn schema]
   (let [reduced-map (reduce (schema-map-reducer pos default-fn schema) {} schema-fields)]
     (fn [inputs]
-      (reduce (fn [out [field input]]
-                (assoc out field ((reduced-map field) input)))
+      (reduce (fn [out field]
+                (assoc out field ((reduced-map field) (inputs field))))
               {}
-              inputs))))
+              schema-fields))))
 
 (def ^:private build-validator (partial build-schemafier #(partial schema/validate (first %)) (constantly nil)))
 
@@ -119,34 +124,55 @@
 
 (def ^:private build-coercer (partial build-schemafier #(coercify (second %)) identity))
 
-(defn- build-handler [action schema req-head resp-head route-path]
+(defn- build-handler [action schema req-head resp-head route-path is-multipart?]
   (let [req-type (req-head :content-type)
         resp-type (resp-head "content-type")
         parse-body (get-body-parser req-type)
         build-body (get-body-builder resp-type)
         validate (build-validator schema)
-        coerce (build-coercer schema)]
-    (fn [split-uri {:keys [headers body query-string request-method content-type] :as req}]
-      (let [{:keys [content-type accept]} headers
+        coerce (build-coercer schema)
+        wrap-request (if is-multipart? multipart-params-request identity)]
+    (fn [split-uri req]
+      (let [req (wrap-request req)
+            _ (mapv println (dissoc req :headers))
+            _ (println "headers")
+            _ (mapv println (req :headers))
+            {:keys [headers body query-string request-method content-type multipart-params]} req
+            {:keys [content-type accept]} headers
             parse-body (if (and (not (nil? content-type)) (not= content-type req-type)) (get-body-parser content-type) parse-body)
             build-body (if (and (not (nil? accept)) (not= accept resp-type)) (get-body-builder accept) build-body)
             body-str (if (nil? body) "" (slurp body))
+            _ (println "")
+            _ (println body-str)
             body (parse-body body-str)
+            _ (println "")
+            _ (println body)
             query (if (nil? query-string) {} (parse-query query-string))
             path (build-path-params route-path split-uri)
             new-req (coerce {:query query
                              :path path
                              :headers headers
                              :body body})
+            new-req (if-not (nil? multipart-params)
+                      (assoc new-req
+                        :multipart
+                        (reduce #(assoc %1 (keyword (key %2)) (val %2)) {} multipart-params))
+                      new-req)
             response (try
                        (validate new-req)
                        (r/ok (build-body (action new-req)))
                        (catch ExceptionInfo e
-                         (r/bad-request (build-body (.getData e))))
+                         (println e)
+                         (r/bad-request (build-body {:type (type e)
+                                                     :message (.getMessage e)})))
                        (catch IllegalArgumentException e
-                         (r/bad-request (build-body (.getMessage e))))
+                         (println e)
+                         (r/bad-request (build-body {:type (type e)
+                                                     :message (.getMessage e)})))
                        (catch Throwable e
-                         (r/internal-server-error (build-body (.getMessage e)))))]
+                         (println e)
+                         (r/internal-server-error (build-body {:type (type e)
+                                                               :message (.getMessage e)}))))]
         (assoc response :headers resp-head)))))
 
 (defn- keywordify [my-map]
@@ -154,49 +180,51 @@
 
 (defn- index-routing [routes]
   (reduce
-    (fn [routing {:keys [method path req-head resp-head schema action]}]
+    (fn [routing {:keys [method is-multipart? path req-head resp-head schema action]}]
       (let [path (if (string? path) (split-path path) path)
             resp-head (if (contains? req-head "Accept") (assoc resp-head "Content-Type" (req-head "Accept")) resp-head)]
         (assoc routing
           {:method method
            :path path
            :headers req-head}
-          (build-handler action schema (keywordify req-head) resp-head path))))
+          (build-handler action schema (keywordify req-head) resp-head path is-multipart?))))
       {}
       routes))
 
-(defrecord Route [method path req-head resp-head schema action])
+(defrecord Route [method is-multipart? path req-head resp-head schema action])
 
-(defn- build-route [method path req-head resp-head schema action]
-  (Route. method path req-head resp-head schema action))
+(defn- build-route [method is-multipart? path req-head resp-head schema action]
+  (Route. method is-multipart? path req-head resp-head schema action))
 
-(def GET (partial build-route :GET))
+(def GET (partial build-route :GET false))
 
-(def POST (partial build-route :POST))
+(def POST (partial build-route :POST false))
 
-(def PUT (partial build-route :PUT))
+(def PUT (partial build-route :PUT false))
 
-(def DELETE (partial build-route :DELETE))
+(def DELETE (partial build-route :DELETE false))
 
-(def OPTIONS (partial build-route :OPTIONS))
+(def OPTIONS (partial build-route :OPTIONS false))
 
-(def HEAD (partial build-route :HEAD))
+(def HEAD (partial build-route :HEAD false))
+
+(def Multipart (partial build-route :POST true))
 
 (defn context [path-str & routes]
-  (println path-str)
-  (println (flatten routes))
-  (mapv (fn [{:keys [method path req-head resp-head schema action]}]
-          (Route. method (str path-str path) req-head resp-head schema action))
+  (mapv (fn [{:keys [method is-multipart? path req-head resp-head schema action]}]
+          (Route. method is-multipart? (str path-str path) req-head resp-head schema action))
         (flatten routes)))
 
 (defn build-static-processor [statics wrapped]
-  (let [my-map (reduce (fn [out [k v]] (assoc out (split-path k) (split-path v))) {} statics)]
+  (let [my-map (reduce (fn [out [k v]] (assoc out (split-path k) (into [(split-path (first v))] (rest v)))) {} statics)]
     (fn [req]
-      (let [uri (split-path {:uri req})
-            path (first (filter (fn [[k _]] (and (< (count k) (count uri))
-                                                 (every? (partial apply =) (mapv vector k uri)))) my-map))]
-        (if (path)
-          (let [[dir coerce] (my-map path)
+      (let [uri (split-path (:uri req))
+            paths (first (filter (fn [[k _]]
+                                  (and (< (count k) (count uri))
+                                       (every? (partial apply =) (mapv vector k uri)))) my-map))]
+        (if-not (nil? paths)
+          (let [[path [dir coerce]] paths
+                coerce (if (nil? coerce) #(FileInputStream. ^String %) coerce)
                 src (s/join "/" (concat dir (drop (count path) uri)))]
             (try
               {:status 200 :body (coerce src)}
@@ -209,7 +237,6 @@
         routing (index-routing (flatten routes))]
     (build-static-processor static
                             (fn [req]
-                              (println req)
                               (try
                                 (let [path (split-path (:uri req))
                                       route (get-route routing path (method req) (:headers req))]
