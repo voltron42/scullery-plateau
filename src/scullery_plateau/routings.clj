@@ -9,7 +9,7 @@
             [clojure.zip :as zip]
             [template.core :as tpl]
             [xml-short.core :as short])
-  (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream)
+  (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream FileInputStream)
            (java.net URLDecoder)))
 
 (defn- parse-int [val] (Integer/parseInt val))
@@ -29,6 +29,7 @@
 (defn build-app []
             (r/build-api
               {"/script" ["/resources/js"]}
+              (r/GET "/favicon.ico" {} {} {} (fn [_] (FileInputStream. "resources/icon/favicon.ico")))
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
