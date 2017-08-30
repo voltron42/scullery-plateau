@@ -14,7 +14,7 @@
                     (reduce #(if (nil? %2) %1 (into %1 %2)) [tag] [attrs content]))
     (list? tpl) (let [[op & args] tpl]
                   (cond
-                    (map? op) (let [[col label] (first op)
+                    (map? op) (let [[label col] (first op)
                                     col (data col)
                                     results (reduce (fn [out elem]
                                                       (let [new-data (if (map? elem)
@@ -27,9 +27,12 @@
                                 results)
                     (list? op) (when (resolve-tpl op-map data [] op)
                                  (reduce (partial resolve-tpl op-map data) out-data args))
-                    (symbol? op) (let [func (op-map op)
+                    (symbol? op) (let [func (let [temp-func (resolve op)] (if-not (nil? temp-func)
+                                                                            temp-func
+                                                                            (op-map op)))
                                        params (map (partial resolve-tpl op-map data []) args)]
-                                   (apply func params))))
+                                   (apply func params))
+                    (keyword? tpl) (tpl data)))
     (keyword? tpl) (tpl data)
     :else tpl))
 
