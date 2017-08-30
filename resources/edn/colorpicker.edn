@@ -1,0 +1,10 @@
+[html
+ [head
+  [title "Color Picker"]
+  [script {src "../script/docbuilder.js"} ""]
+  [script {src "../script/color.js"} ""]]
+ [body {onLoad "ctrl.init()"}
+  [select {id "colorpicker"}]
+  [input {id "hex" type "text" onChange "ctrl.setColor(this)"}]
+  [label {for "hex"} " White Print? "]
+  [input {name "hex" type "checkbox" onChange "ctrl.setForeColor(this,'hex')"}]]]

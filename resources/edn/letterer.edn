@@ -1,0 +1,22 @@
+[html
+ [head
+  [title "Letterer"]
+  [script {src "../script/docbuilder.js"} " "]
+  [script {src "../script/letterer.js"} " "]]
+ [body {onLoad "startup()"}
+  [ol
+   [li [input {id "color0" type "text" value "white" onChange "updateColors(2)"}]]
+   [li [input {id "color1" type "text" value "black" onChange "updateColors(2)"}]]]
+  [button {onClick "load()"} "Load"]
+  [button {onClick "clearAll(3)"} "Clear"]
+  [button {onClick "encodeLetter()"} "Encode"]
+  [input {id "letter" type "text" value "a"}]
+  br
+  [textarea {id "output"} "{}"]
+  br
+  [button {onClick "transform('horiz',3)"} "Flip Horizontal"]
+  [button {onClick "transform('vert',3)"} "Flip Vertical"]
+  [button {onClick "transform('right',3)"} "Rotate Right"]
+  [button {onClick "transform('left',3)"} "Rotate Left"]
+  br
+  [div {id "canvas"}]]]

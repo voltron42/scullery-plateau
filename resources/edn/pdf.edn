@@ -1,0 +1,7 @@
+[html
+ [head [title "PDF"]]
+ [body
+  [form {action "/api/pdf" method "post" target "_blank"}
+   [textarea {name "pdf" rows 10 cols 40}]
+   br
+   [input {type "submit" value "Submit"}]]]]

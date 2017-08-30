@@ -1,0 +1,7 @@
+[html
+ [head [title "PNG"]]
+ [body
+  [form {action "/api/svg/png" method "post" target "_blank"}
+   [textarea {name "svg" rows 10 cols 40}]
+   br
+   [input {type "submit" value "Submit"}]]]]

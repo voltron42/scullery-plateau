@@ -1,16 +1,7 @@
-{:colorpicker {:title "Color Picker"
-               :script "../script/color.js"
-               :on-load "ctrl.init()"}
- :letterer {:title "Letterer"
-            :script "../script/letterer.js"
+{:letterer {:title "Letterer"
+            :script "../script/letterer.edn.js"
             :on-load "startup()"}
  :tilebuilder {:title "Tile Builder"
                :script "../script/tileBuilder.js"
                :on-load "startup()"}
- :jpg {:title "JPG"
-       :script "../script/jpg.js"
-       :on-load "startup()"}
- :png {:title "PNG"
-       :script "../script/png.js"
-       :on-load "startup()"}
  }

@@ -28,7 +28,9 @@
 
 (defn build-app []
             (r/build-api
-              {"/script" ["/resources/js"]}
+              {"/script" ["/resources/js"]
+               "/edn" ["/resources/edn" #(let [tpl (->> (str % ".edn") (slurp) (edn/read-string) (build-template))]
+                                             (->> {} (tpl) (short/x-pand) (xml/emit-element) (with-out-str)))]}
               (r/GET "/favicon.ico" {} {} {} (fn [_] (FileInputStream. "resources/icon/favicon.ico")))
               (r/context "/sample"
                          (r/GET "/plus" {}

@@ -1,0 +1,7 @@
+[html
+ [head [title "PDF"]]
+ [body
+  [form {action "/api/form" method "post" target "_blank" enctype "multipart/form-data"}
+   [input {name "file" type "file"}]
+   br
+   [input {type "submit" value "Read File"}]]]]

@@ -151,12 +151,8 @@
   };
   var Controller = function() {
     this.init = function() {
-      build(document.getElementsByTagName("body")[0],[{
-        tag: "select",
-        attrs: {
-          style: "yellow"
-        },
-        children: Object.keys(colors).map(function(c){
+      build(document.getElementById("colorpicker"),
+          Object.keys(colors).map(function(c){
           return {
             tag: "option",
             attrs: {
@@ -165,29 +161,7 @@
             },
             children: [c]
           };
-        })
-      },{
-        tag: "input",
-        attrs: {
-          id: "hex",
-          type: "text",
-          onChange: "ctrl.setColor(this)"
-        }
-      },{
-        tag: "label",
-        attrs: {
-          for: "hex"
-        },
-        children: [" White Print? "]
-      },{
-        tag: "input",
-        attrs: {
-          id: "hex",
-          name: "hex",
-          type: "checkbox",
-          onChange: "ctrl.setForeColor(this,'hex')"
-        }
-      }]);
+        }));
     }
     this.setColor = function(input) {
       console.log(input);

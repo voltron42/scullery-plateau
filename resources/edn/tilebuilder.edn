@@ -1,0 +1,9 @@
+[html
+ [head
+  [title "Tile Builder"]
+  [script {src "../script/docbuilder.js"} " "]
+  [script {src "../script/tileBuilder.js"} " "]]
+ [body {onLoad "startup()"}
+  [ul [li [input {name "pickcolor" type "radio" checked true value "toggle"}] [label "(toggle color)"]]]
+  [ol ]
+  ]]
