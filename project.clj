@@ -13,7 +13,8 @@
                  [prismatic/schema "1.1.6"]
                  [cheshire "5.8.0"]
                  [ring-mock "0.1.5"]
-                 [javax.servlet/javax.servlet-api "3.1.0"]]
+                 [javax.servlet/javax.servlet-api "3.1.0"]
+                 [org.clojure/core.async "0.3.443"]]
   :min-lein-version "2.0.0"
   :plugins [[environ/environ.lein "0.3.1"]]
   :hooks [environ.leiningen.hooks]

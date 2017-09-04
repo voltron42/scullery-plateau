@@ -1,16 +1,18 @@
 (ns music.audio
+  (:require [clojure.core.async :as async])
   (:import [javax.sound.sampled AudioSystem SourceDataLine AudioFormat]
            [javax.sound.sampled DataLine DataLine$Info]
-           [javax.sound.sampled AudioFormat$Encoding]))
+           [javax.sound.sampled AudioFormat$Encoding]
+           (java.util.concurrent CountDownLatch)))
 
 (def popular-format
   (AudioFormat. AudioFormat$Encoding/PCM_SIGNED
-                48000 ; sample rate
-                16    ; bits per sample
+                44100 ; sample rate
+                8    ; bits per sample
                 2     ; channels
-                4     ; frame size 2*16bits [bytes]
-                48000 ; frame rate
-                false ; little endian
+                2     ; frame size 2*16bits [bytes]
+                44100 ; frame rate
+                true ; little endian
                 ))
 
 (defn open-line [audio-format]
@@ -99,7 +101,53 @@
    [0 1] [2 1] [3 1] [5 1]
    [7 1] [3 1] [7 1] [12 1]
    [10 1] [7 1] [3 1] [7 1]
-   [10 2]])
+   [10 4]])
+
+(def ^:private notes {:Ab -1 :A 0 :A# 1 :Bb 1 :B 2
+                       :C 3 :C# 4 :Db 4 :D 5 :D# 6
+                       :Eb 6 :E 7 :F 8 :F# 9
+                       :Gb 9 :G 10 :G# 11})
+
+(defn- parse-int [s] (Integer/parseInt s))
+
+(defn map-note-to-pitch [note]
+  (let [pitch (->> note (name) (keyword) (notes))
+        octave (->> note (namespace) (rest) (apply str) (parse-int))]
+    (->> 12
+         (* octave)
+         (+ pitch))))
+
+(def mk
+  [[[1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
+    [1/8 :=5/A] [1/8 :=4/F] [1/4 :=5/A]
+    [1/8 :=4/G#] [1/8 :=4/E] [1/4 :=4/G#]
+    [1/8 :=4/G] [1/8 :=4/Eb] [1/4 :=4/G]
+    [1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
+    [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A] [1/8 :=5/D]
+    [1/8 :=5/C] [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A]
+    [1/2 :=5/C]]
+   [[1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
+    [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
+    [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
+    [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F]]])
+
+(defn play-line [agent base-tone base-duration latch line]
+  (.countDown latch)
+  (.await latch)
+  (doseq [[duration tone] line]
+    (change-freq agent (tone-freq (+ base-tone (map-note-to-pitch tone))))
+    (Thread/sleep (* base-duration duration)))
+  (pause agent))
+
+(defn play-song [agent-fn base-tone base-duration song]
+  (let [start (CountDownLatch. (count song))]
+    (doseq [line song]
+      (async/go
+        (play-line (agent-fn) base-tone base-duration start line)))))
+
+(defn play-song-mk [pitch tempo]
+  (let [func #(line-agent (open-line popular-format) 25)]
+    (play-song func pitch tempo (map #(apply concat (repeat 2 %)) mk))))
 
 (defn play-melody [agent base-tone base-duration melody]
   (doseq [[tone duration] melody]
@@ -107,9 +155,9 @@
     (Thread/sleep (* base-duration duration)))
   (pause agent))
 
-(defn play-mk [song x y z]
-  (let [a (line-agent (open-line popular-format) x)]
+(defn play-mk [song y z]
+  (let [a (line-agent (open-line popular-format) 60)]
     (play-melody a y z mountain-king)))
 
 (defn -main [& args]
-  (play mountain-king 70 80 250))
+  (play-mk mountain-king 80 250))
