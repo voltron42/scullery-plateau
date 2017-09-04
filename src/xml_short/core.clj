@@ -22,7 +22,7 @@
         attrs (reduce (fn [out [k v]] (assoc out k (encode-html-entities (str v)))) {} attrs)
         content (if (or (nil? content) (empty? content))
                   content
-                  (mapv #(if (or (vector? %) (symbol? %)) (x-pand %) (encode-html-entities (str %))) content))]
+                  (mapv #(if (or (vector? %) (symbol? %)) (x-pand %) (str %)) content))]
     (reduce (fn [out [k v]] (if (or (empty? v) (nil? v)) out (assoc out k v)))
             {:tag tag}
             {:attrs attrs :content content})))

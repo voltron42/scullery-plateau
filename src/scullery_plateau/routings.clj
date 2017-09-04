@@ -8,7 +8,8 @@
             [clojure.xml :as xml]
             [clojure.zip :as zip]
             [template.core :as tpl]
-            [xml-short.core :as short])
+            [xml-short.core :as short]
+            [cheshire.core :as json])
   (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream FileInputStream)
            (java.net URLDecoder)))
 
@@ -26,12 +27,15 @@
 
 (def ^:private build-template (tpl/build-template-factory {}))
 
+(defn- build-page [filepath data]
+  (let [tpl (->> (str filepath ".edn") (slurp) (edn/read-string) (build-template))]
+    (->> data (tpl) (short/x-pand) (xml/emit-element) (with-out-str))))
+
 (defn build-app []
             (r/build-api
-              {"/script" ["/resources/js"]
-               "/edn" ["/resources/edn" #(let [tpl (->> (str % ".edn") (slurp) (edn/read-string) (build-template))]
-                                             (->> {} (tpl) (short/x-pand) (xml/emit-element) (with-out-str)))]}
-              (r/GET "/favicon.ico" {} {} {} (fn [_] (FileInputStream. "resources/icon/favicon.ico")))
+              {"/favicon.ico" ["resources/icon/favicon.ico"]
+               "/script" ["/resources/js"]
+               "/edn" ["/resources/edn" #(build-page % {})]}
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
@@ -45,19 +49,14 @@
                                 {"content-type" "text/html"}
                                 {:path [{:app s/Keyword} {:app keyword}]}
                                 (fn [{:keys [path]}]
-                                  (let [apps (->> "resources/tpl/apps.edn" (slurp) (edn/read-string))
+                                  (let [apps (->> "resources/tpl/apps.edn"
+                                                  (slurp)
+                                                  (edn/read-string))
                                         {:keys [app]} path]
                                     (if-not (contains? apps app)
                                       page404
-                                      (let [tpl (->> "resources/tpl/index.edn"
-                                                     (slurp)
-                                                     (edn/read-string)
-                                                     (build-template))]
-                                        (->> (apps app)
-                                             (tpl)
-                                             (short/x-pand)
-                                             (xml/emit-element)
-                                             (with-out-str))))))))
+                                      (build-page "resources/tpl/index" (apps app))
+                                      )))))
               (r/context "/api"
                          (r/context "/svg"
                                     (r/POST "/png"
@@ -91,4 +90,33 @@
                                                        :tempfile
                                                        (slurp))]
                                      {:multipart multipart
-                                      :contents contents}))))))
+                                      :contents contents}))))
+              (r/context "/state"
+                         (r/GET "/test"
+                                {}
+                                {"content-type" "text/html"}
+                                {}
+                                (fn [_]
+                                  (build-page "resources/tpl/testapp"
+                                              {:data "{}"
+                                               :filename "new.json"})))
+                         (r/Multipart "/test"
+                                      {}
+                                      {"content-type" "text/html"}
+                                      {}
+                                      (fn [{:keys [multipart]}]
+                                        (->> multipart
+                                             :file
+                                             :tempfile
+                                             (slurp)
+                                             (assoc (select-keys multipart [:filename]) :data)
+                                             (build-page "resources/tpl/testapp"))))
+                         (r/POST "/test/:filename"
+                                      {"content-type" "application/x-www-form-urlencoded"}
+                                      {"content-type" "application/json"}
+                                      {}
+                                      (fn [{:keys [body]}]
+                                        (->> body
+                                             :savedata
+                                             (URLDecoder/decode)
+                                             (json/parse-string)))))))

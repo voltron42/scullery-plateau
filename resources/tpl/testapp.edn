@@ -1,0 +1,18 @@
+[html
+ [head
+  [title "sample"]
+  [script {type "text/javascript"} (str "var data = " :data ";")]
+  [script {src "../script/state.js"} ""]]
+ [body {onLoad "preLoadData(['state','savedata'])"}
+  [button {onClick "newState()"} "New"]
+  [form {action "./test" method "post" enctype "multipart/form-data"}
+   [input {type "submit" value "Load"}]
+   [input {type "file" name "file"}]]
+  [form {id "saveform" action (str "./test/" :filename) method "post" target "_blank"}
+   [input {type "hidden" id "savedata" name "savedata" value ""}]
+   [input {type "submit" value "Save"}]]
+  [label "Filename:"]
+  [input {type "file" id "filename" onChange "setFilename(this)"}]
+  br
+  [textarea {id "state" rows 15 cols 50
+             onChange "updateState('state',['savedata'])"} ""]]]

@@ -70,4 +70,4 @@
   (fn build-template [tpl]
     (fn resolve-template [data]
       (let [resolved (resolve-tpl (merge op-map default-ops) data [] tpl)]
-        (flatten-output resolved)))))
+        resolved))))

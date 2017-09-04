@@ -158,15 +158,15 @@
                        (r/ok (build-body (action new-req)))
                        (catch ExceptionInfo e
                          (println e)
-                         (r/bad-request (build-body {:type (type e)
+                         (r/bad-request (build-body {:type (str (type e))
                                                      :message (.getMessage e)})))
                        (catch IllegalArgumentException e
                          (println e)
-                         (r/bad-request (build-body {:type (type e)
+                         (r/bad-request (build-body {:type (str (type e))
                                                      :message (.getMessage e)})))
                        (catch Throwable e
                          (println e)
-                         (r/internal-server-error (build-body {:type (type e)
+                         (r/internal-server-error (build-body {:type (str (type e))
                                                                :message (.getMessage e)}))))]
         (assoc response :headers resp-head)))))
 
@@ -241,3 +241,6 @@
                                 (catch Throwable t
                                   (println (.getMessage t))
                                   (.printStackTrace t)))))))
+
+(defn loadable-page [path tpl page-title default-data default-filename & js-files]
+  )

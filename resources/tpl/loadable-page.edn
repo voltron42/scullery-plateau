@@ -1,0 +1,7 @@
+[html
+ [head
+  [title :page-title]
+  [script {type "text/javascript"} (str "var data = " :data ";")]
+  ({:script :js-files}
+    [script {src (str "../script/" :script)} ""])]
+ [body {onLoad :load-body}]]
