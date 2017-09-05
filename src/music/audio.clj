@@ -1,9 +1,18 @@
 (ns music.audio
-  (:require [clojure.core.async :as async])
+  (:require [clojure.core.async :as async]
+            [clojure.edn :as edn])
   (:import [javax.sound.sampled AudioSystem SourceDataLine AudioFormat]
            [javax.sound.sampled DataLine DataLine$Info]
            [javax.sound.sampled AudioFormat$Encoding]
            (java.util.concurrent CountDownLatch)))
+
+(def other-format
+  (AudioFormat. 32000 ; sample rate
+                8    ; bits per sample
+                2     ; channels
+                true ; signed
+                true ; little endian
+                ))
 
 (def popular-format
   (AudioFormat. AudioFormat$Encoding/PCM_SIGNED
@@ -94,16 +103,6 @@
 (defn tone-freq [x]
   (-> (Math/pow 2 (/ x 11)) (* 440) (/ 512)))
 
-(def mountain-king
-  [[0 1] [2 1] [3 1] [5 1]
-   [7 1] [3 1] [7 2]
-   [6 1] [2 1] [6 2]
-   [5 1] [1 1] [5 2]
-   [0 1] [2 1] [3 1] [5 1]
-   [7 1] [3 1] [7 1] [12 1]
-   [10 1] [7 1] [3 1] [7 1]
-   [10 4]])
-
 (def ^:private notes {:Ab -1 :A 0 :A# 1 :Bb 1 :B 2
                        :C 3 :C# 4 :Db 4 :D 5 :D# 6
                        :Eb 6 :E 7 :F 8 :F# 9
@@ -137,70 +136,12 @@
         (.await end)))))
 
 (defn play-song [song pitch tempo]
-  (let [func #(line-agent (open-line popular-format) 25)
+  (let [func #(line-agent (open-line other-format) 50)
         play-me #(play-lines func pitch tempo song)]
     (play-me)))
 
-(def mk
-  [[[1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
-    [1/8 :=5/A] [1/8 :=4/F] [1/4 :=5/A]
-    [1/8 :=4/G#] [1/8 :=4/E] [1/4 :=4/G#]
-    [1/8 :=4/G] [1/8 :=4/Eb] [1/4 :=4/G]
-    [1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
-    [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A] [1/8 :=5/D]
-    [1/8 :=5/C] [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A]
-    [1/4 :=5/C] [1/4]]
-   [[1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
-    [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
-    [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
-    [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F]]])
-
 (defn start-playing-mk []
-  (play-song mk 40 2000))
-
-(def zelda
-  [[[1/2 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
-    [3/16 :=5/Bb] [1/16 :=5/Ab] [1/4 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
-    [3/16 :=5/Bb] [1/16 :=5/Ab] [1/4 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
-    [1/8 :=5/Bb] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/8 :=4/F]
-
-    [1/4 :=5/Bb] [1/4 :=4/F] [3/16 :=4/F] [1/16 :=5/Bb] [1/16 :=5/Bb] [1/16 :=5/C]  [1/16 :=5/D] [1/16 :=5/Eb]
-    [1/2 :=5/F] [1/8] [1/8 :=5/F] [1/12 :=5/F] [1/12 :=5/Gb] [1/12 :=6/Ab]
-    [1/2 :=6/Bb] [1/12] [1/12 :=6/Bb] [1/12 :=6/Bb] [1/12 :=6/Bb] [1/12 :=6/Ab] [1/12 :=5/Gb]
-
-    ]
-   [[1/2 :=4/D] [2/12] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/D]
-    [3/16 :=4/C] [1/16 :=4/C] [1/4 :=4/C] [1/4] [1/12 :=4/C] [1/12 :=4/C] [1/12 :=4/C]
-    [3/16 :=4/Db] [1/16 :=4/Db] [1/4 :=4/Db] [2/12] [1/12 :=4/Db] [1/12 :=4/Db] [1/12 :=4/Db] [1/12 :=4/Db]
-    [1/8 :=4/Db] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/8 :=4/A]
-
-    [1/4 :=4/D] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/C] [3/16 :=4/D] [1/16 :=4/D] [1/16 :=4/D] [1/16 :=4/Eb] [1/16 :=4/F] [1/16 :=4/G]
-
-
-    ]
-   [[1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb]
-    [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab]
-    [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb]
-    [1/4 :=1/F] [1/4 :=1/F] [1/4 :=1/F] [1/8 :=1/G] [1/8 :=2/A]
-
-    [1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Ab] [1/4 :=2/Bb] [1/4 :=2/Bb]
-    [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=1/Gb] [1/4 :=2/Ab] [1/4 :=2/Ab]
-    [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/E] [1/4 :=1/Gb] [1/4 :=1/Gb]
-
-    ]])
+  (play-song (edn/read-string (slurp "resources/sheet/mountainking.edn")) 33 2000))
 
 (defn start-playing-zelda []
-  (play-song zelda 33 2000))
-
-(defn play-melody [agent base-tone base-duration melody]
-  (doseq [[tone duration] melody]
-    (change-freq agent (tone-freq (+ base-tone tone)))
-    (Thread/sleep (* base-duration duration)))
-  (pause agent))
-
-(defn play-mk [song y z]
-  (let [a (line-agent (open-line popular-format) 60)]
-    (play-melody a y z mountain-king)))
-
-(defn -main [& args]
-  (play-mk mountain-king 80 250))
+  (play-song (edn/read-string (slurp "resources/sheet/zelda.edn")) 33 2000))
