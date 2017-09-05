@@ -80,10 +80,11 @@
   (send-off agent play-data agent))
 
 (defn change-freq [agent freq]
-  (doto agent
-    pause
-    (send recalc-data freq)
-    play))
+  (pause agent)
+    (when-not (nil? freq)
+      (doto agent
+        (send recalc-data freq)
+        play)))
 
 (defn line-agent [line freq]
   (let [agent (agent {:line line})]
@@ -111,11 +112,34 @@
 (defn- parse-int [s] (Integer/parseInt s))
 
 (defn map-note-to-pitch [note]
-  (let [pitch (->> note (name) (keyword) (notes))
-        octave (->> note (namespace) (rest) (apply str) (parse-int))]
-    (->> 12
-         (* octave)
-         (+ pitch))))
+    (let [pitch (->> note (name) (keyword) (notes))
+          octave (->> note (namespace) (rest) (apply str) (parse-int))]
+      (->> 12
+           (* octave)
+           (+ pitch))))
+
+(defn play-line [agent base-tone base-duration line]
+  (doseq [[duration tone] line]
+    (change-freq agent (when-not (nil? tone)
+                         (tone-freq (+ base-tone (map-note-to-pitch tone)))))
+    (Thread/sleep (* base-duration duration)))
+  (pause agent))
+
+(defn play-lines [agent-fn base-tone base-duration song]
+  (let [start (CountDownLatch. (count song))
+        end (CountDownLatch. (count song))]
+    (doseq [line song]
+      (async/go
+        (.countDown start)
+        (.await start)
+        (play-line (agent-fn) base-tone base-duration line)
+        (.countDown end)
+        (.await end)))))
+
+(defn play-song [song pitch tempo]
+  (let [func #(line-agent (open-line popular-format) 25)
+        play-me #(play-lines func pitch tempo song)]
+    (play-me)))
 
 (def mk
   [[[1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
@@ -125,29 +149,48 @@
     [1/8 :=4/D] [1/8 :=4/E] [1/8 :=4/F] [1/8 :=4/G]
     [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A] [1/8 :=5/D]
     [1/8 :=5/C] [1/8 :=5/A] [1/8 :=4/F] [1/8 :=5/A]
-    [1/2 :=5/C]]
+    [1/4 :=5/C] [1/4]]
    [[1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
     [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
     [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D] [1/4 :=3/D]
     [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F] [1/4 :=3/F]]])
 
-(defn play-line [agent base-tone base-duration latch line]
-  (.countDown latch)
-  (.await latch)
-  (doseq [[duration tone] line]
-    (change-freq agent (tone-freq (+ base-tone (map-note-to-pitch tone))))
-    (Thread/sleep (* base-duration duration)))
-  (pause agent))
+(defn start-playing-mk []
+  (play-song mk 40 2000))
 
-(defn play-song [agent-fn base-tone base-duration song]
-  (let [start (CountDownLatch. (count song))]
-    (doseq [line song]
-      (async/go
-        (play-line (agent-fn) base-tone base-duration start line)))))
+(def zelda
+  [[[1/2 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
+    [3/16 :=5/Bb] [1/16 :=5/Ab] [1/4 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
+    [3/16 :=5/Bb] [1/16 :=5/Ab] [1/4 :=5/Bb] [2/12] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb] [1/12 :=5/Bb]
+    [1/8 :=5/Bb] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/16 :=4/F] [1/16 :=4/F] [1/8 :=4/F] [1/8 :=4/F]
 
-(defn play-song-mk [pitch tempo]
-  (let [func #(line-agent (open-line popular-format) 25)]
-    (play-song func pitch tempo (map #(apply concat (repeat 2 %)) mk))))
+    [1/4 :=5/Bb] [1/4 :=4/F] [3/16 :=4/F] [1/16 :=5/Bb] [1/16 :=5/Bb] [1/16 :=5/C]  [1/16 :=5/D] [1/16 :=5/Eb]
+    [1/2 :=5/F] [1/8] [1/8 :=5/F] [1/12 :=5/F] [1/12 :=5/Gb] [1/12 :=6/Ab]
+    [1/2 :=6/Bb] [1/12] [1/12 :=6/Bb] [1/12 :=6/Bb] [1/12 :=6/Bb] [1/12 :=6/Ab] [1/12 :=5/Gb]
+
+    ]
+   [[1/2 :=4/D] [2/12] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/D]
+    [3/16 :=4/C] [1/16 :=4/C] [1/4 :=4/C] [1/4] [1/12 :=4/C] [1/12 :=4/C] [1/12 :=4/C]
+    [3/16 :=4/Db] [1/16 :=4/Db] [1/4 :=4/Db] [2/12] [1/12 :=4/Db] [1/12 :=4/Db] [1/12 :=4/Db] [1/12 :=4/Db]
+    [1/8 :=4/Db] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/16 :=4/A] [1/16 :=4/A] [1/8 :=4/A] [1/8 :=4/A]
+
+    [1/4 :=4/D] [1/12 :=4/D] [1/12 :=4/D] [1/12 :=4/C] [3/16 :=4/D] [1/16 :=4/D] [1/16 :=4/D] [1/16 :=4/Eb] [1/16 :=4/F] [1/16 :=4/G]
+
+
+    ]
+   [[1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb]
+    [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab]
+    [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb]
+    [1/4 :=1/F] [1/4 :=1/F] [1/4 :=1/F] [1/8 :=1/G] [1/8 :=2/A]
+
+    [1/4 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Bb] [1/12 :=2/Ab] [1/4 :=2/Bb] [1/4 :=2/Bb]
+    [1/4 :=2/Ab] [1/12 :=2/Ab] [1/12 :=2/Ab] [1/12 :=1/Gb] [1/4 :=2/Ab] [1/4 :=2/Ab]
+    [1/4 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/Gb] [1/12 :=1/E] [1/4 :=1/Gb] [1/4 :=1/Gb]
+
+    ]])
+
+(defn start-playing-zelda []
+  (play-song zelda 33 2000))
 
 (defn play-melody [agent base-tone base-duration melody]
   (doseq [[tone duration] melody]
