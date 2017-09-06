@@ -1,0 +1,42 @@
+[html
+ [head
+  [title "sample"]
+  [script {src "../script/state.js"} ""]
+  [script {src "../script/docbuilder.js"} ""]
+  [script {src "../script/pixelart.js"} ""]
+  [script {type "text/javascript"}
+   (str
+     "(function() {\n"
+     "  var myData = " :data ";\n"
+     "  window.ctrl = new Controller(myData,'ctrl','palette','widthField','heightField','canvas','savedata');\n"
+     "})()")]
+  [script {type "text/javascript"} ""]
+  ]
+ [body {onLoad "ctrl.init()"}
+  [button {onClick "newState()"} "New"]
+  [form {action "./test" method "post" enctype "multipart/form-data"}
+   [input {type "submit" value "Load"}]
+   [input {type "file" name "file"}]]
+  [form {id "saveform" action (str "./test/" :filename) method "post" target "_blank"}
+   [input {type "hidden" id "savedata" name "savedata" value ""}]
+   [input {type "submit" value "Save"}]]
+  [label "Filename:"]
+  [input {type "file" id "filename" onChange "setFilename(this)"}]
+  hr
+  [div {id "ctrls"}
+   [button {onClick "ctrl.addColor()"} "Add Color"]
+   br
+   [input {type "radio" name "colors" id "colorSelect0" value "0" checked true}]
+   [label {for "backgroundColor"} " Background Color: "]
+   [input {type "text" id "color0" value "white" onChange "ctrl.updateColor(0)"}]
+   br
+   [ol {id "palette"}]
+   br
+   [label {for "width"} " Width: "]
+   [input {type "number" id "widthField" name "width" value "0" onChange "ctrl.resize()"}]
+   [label {for "height"} " Height: "]
+   [input {type "number" id "heightField" name "height" value "0" onChange "ctrl.resize()"}]
+   ]
+  br
+  [div {id "canvas"}]
+  ]]

@@ -91,6 +91,38 @@
                                                        (slurp))]
                                      {:multipart multipart
                                       :contents contents}))))
+              (r/context "/draw"
+                         (r/GET "/pixel"
+                                {}
+                                {"content-type" "text/html"}
+                                {}
+                                (fn [_]
+                                  (build-page "resources/tpl/pixelart"
+                                              {:data (json/generate-string {:width 10
+                                                                            :height 10
+                                                                            :palette ["white"]
+                                                                            :grid {}})
+                                               :filename "new.json"})))
+                         (r/Multipart "/pixel"
+                                      {}
+                                      {"content-type" "text/html"}
+                                      {}
+                                      (fn [{:keys [multipart]}]
+                                        (->> multipart
+                                             :file
+                                             :tempfile
+                                             (slurp)
+                                             (assoc (select-keys (:file multipart) [:filename]) :data)
+                                             (build-page "resources/tpl/pixelart"))))
+                         (r/POST "/pixel/:filename"
+                                 {"content-type" "application/x-www-form-urlencoded"}
+                                 {"content-type" "application/json"}
+                                 {}
+                                 (fn [{:keys [body]}]
+                                   (->> body
+                                        :savedata
+                                        (URLDecoder/decode)
+                                        (json/parse-string)))))
               (r/context "/state"
                          (r/GET "/test"
                                 {}
@@ -109,7 +141,7 @@
                                              :file
                                              :tempfile
                                              (slurp)
-                                             (assoc (select-keys multipart [:filename]) :data)
+                                             (assoc (select-keys (:file multipart) [:filename]) :data)
                                              (build-page "resources/tpl/testapp"))))
                          (r/POST "/test/:filename"
                                       {"content-type" "application/x-www-form-urlencoded"}

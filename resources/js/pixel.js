@@ -1,36 +1,17 @@
 (function(){
-  var Controller = function(instanceName,paletteId,widthFieldId,heightFieldId,canvasId) {
+  window.Controller = function(data,instanceName,paletteId,widthFieldId,heightFieldId,canvasId,saveDataId) {
     var defaultColors = ["red","blue","green"];
-    var colorCount = 1;
-    var dim = {
-      width: 10,
-      height: 10
-    };
     var coeff = 25;
-    var readGrid = function() {
-      var indexMap = range(colorCount).reduce(function(out,n){
-        out["#r" + n] = n;
-        return out;
-      },{});
-      return range(dim.height).reduce(function(grid,y){
-        return range(dim.width).reduce(function(out,x){
-          var id = x + "-" + y;
-          var pixel = document.getElementById(id);
-          var color = pixel.attributes.getNamedItem("href").value;
-          if (color != "#r0") {
-            out[id] = indexMap[color];
-          }
-          return out;
-        },grid);
-      },{});
-    };
+    var updateSaveData = function() {
+      document.getElementById(saveDataId).value = JSON.stringify(data);
+    }
     var buildCanvas = function(grid) {
       build(document.getElementById(canvasId),[{
         tag: "svg",
         attrs: {
           width: "50%",
           height: "50%",
-          viewBox: [0,0,(coeff * dim.width),(coeff * dim.height)].join(" ")
+          viewBox: [0,0,(coeff * data.width),(coeff * data.height)].join(" ")
         },
         children: [{
           tag: "defs",
@@ -44,9 +25,8 @@
               "stroke-width": 1,
               fill: "white"
             }
-          }].concat(range(colorCount).map(function(n){
-            var color = document.getElementById("color"+n).value;
-            if (color == "") {
+          }].concat(data.palette.map(function(color, n){
+            if (color === "") {
               color = "none";
             }
             return {
@@ -61,8 +41,8 @@
               }
             }
           }))
-        }].concat(range(dim.height).reduce(function(out,y){
-          return out.concat(range(dim.width).map(function(x){
+        }].concat(range(data.height).reduce(function(out,y){
+          return out.concat(range(data.width).map(function(x){
             var id = x + "-" + y;
             var color = (id in grid)?"#r" + grid[id]:"#r0";
             return {
@@ -78,43 +58,22 @@
           }));
         },[]))
       }])
-    }
-    this.init = function() {
-      build(document.getElementsByTagName("body")[0], [{
-        tag: "div",
-        attrs:{
-          id: "ctrls"
-        },
-        children: [].concat(
-        button("Add Color", instanceName + ".addColor()"),
-        br(),
-        radio("colors","colorSelect0",0,true),
-        labeled("backgroundColor"," Background Color: ",text("color0","white",instanceName + ".updateColor(0)")),
-        br(),
-        {
-          tag: "ol",
-          attrs: { id: paletteId },
-          children: []
-        },
-        br(),
-        labeled("width"," Width: ",number(widthFieldId,dim.width,instanceName + ".resize()")),
-        labeled("height"," Height: ",number(heightFieldId,dim.height,instanceName + ".resize()")))
-      },
-      br(),
-      {
-        tag: "div",
-        attrs: { id: canvasId }
-      }]);
-      buildCanvas({});
     };
-    this.addColor= function() {
-      var colorRange = range(colorCount).splice(1);
-      var colors = colorRange.map(function(n){
-        return document.getElementById("color" + n).value;
-      });
-      colorCount++;
-      colors.push("white");
-      build(document.getElementById(paletteId),colors.map(function(color,n){
+    this.init = function() {
+        document.getElementById(widthFieldId).value = data.width;
+        document.getElementById(heightFieldId).value = data.height;
+        while(colorCount < data.palette.length) {
+          this.addColor();
+        }
+        data.palette.forEach(function(color, index) {
+          document.getElementById("color" + index).value = color;
+        });
+        buildCanvas(data.grid);
+        updateSaveData();
+    };
+    this.addColor = function() {
+      data.palette.push("white");
+      build(document.getElementById(paletteId),data.palette.map(function(color,n){
         var index = n + 1;
         return {
           tag: "li",
@@ -137,27 +96,22 @@
             }
           }]
         };
-      }))
-      var grid = readGrid();
-      buildCanvas(grid);
+      }));
+      buildCanvas(data.grid);
     };
-    var updateColor = function(fieldId,rectId) {
-      var colorField = document.getElementById(fieldId);
-      var colorObj = document.getElementById(rectId);
+    var updateColor = function(index) {
+      var colorField = document.getElementById("color" + index);
+      var colorObj = document.getElementById("r" + index);
       var fill = colorObj.attributes.getNamedItem("fill");
       fill.value = colorField.value;
-    }
-    this.updateBackground = function() {
-      updateColor(bgColorFieldId,"background");
-    }
-    this.updateColor = function(n) {
-      updateColor("color" + n, "r" + n);
+      data.color[n] = colorField.value;
+      updateSaveData();
     }
     this.resize = function() {
-      var grid = readGrid();
-      dim.width = document.getElementById(widthFieldId).value;
-      dim.height = document.getElementById(heightFieldId).value;
-      buildCanvas(grid);
+      data.width = document.getElementById(widthFieldId).value;
+      data.height = document.getElementById(heightFieldId).value;
+      buildCanvas(data.grid);
+      updateSaveData();
     };
     this.setColor = function(x, y) {
       console.log("set color: (" + x + "," + y + ")");
@@ -173,8 +127,13 @@
       var id = x + "-" + y;
       var pixel = document.getElementById(id);
       var href = pixel.attributes.getNamedItem("href");
-      href.value = "#r" + colorIndex
+      href.value = "#r" + colorIndex;
+      if (colorIndex > 0) {
+          data.grid[id] = colorIndex;
+      } else {
+        delete data.grid[id];
+      }
+      updateSaveData();
     }
   };
-  window.ctrl = new Controller("ctrl","palette","widthField","heightField","canvas");
 })()
