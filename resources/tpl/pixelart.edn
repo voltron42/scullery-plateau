@@ -14,10 +14,10 @@
   ]
  [body {onLoad "ctrl.init()"}
   [button {onClick "newState()"} "New"]
-  [form {action "./test" method "post" enctype "multipart/form-data"}
+  [form {action "./pixel" method "post" enctype "multipart/form-data"}
    [input {type "submit" value "Load"}]
    [input {type "file" name "file"}]]
-  [form {id "saveform" action (str "./test/" :filename) method "post" target "_blank"}
+  [form {id "saveform" action (str "./pixel/" :filename) method "post" target "_blank"}
    [input {type "hidden" id "savedata" name "savedata" value ""}]
    [input {type "submit" value "Save"}]]
   [label "Filename:"]
@@ -30,7 +30,7 @@
    [label {for "backgroundColor"} " Background Color: "]
    [input {type "text" id "color0" value "white" onChange "ctrl.updateColor(0)"}]
    br
-   [ol {id "palette"}]
+   [ol {id "palette"} ""]
    br
    [label {for "width"} " Width: "]
    [input {type "number" id "widthField" name "width" value "0" onChange "ctrl.resize()"}]

@@ -1,6 +1,5 @@
 (function(){
   window.Controller = function(data,instanceName,paletteId,widthFieldId,heightFieldId,canvasId,saveDataId) {
-    var defaultColors = ["red","blue","green"];
     var coeff = 25;
     var updateSaveData = function() {
       document.getElementById(saveDataId).value = JSON.stringify(data);
@@ -73,7 +72,7 @@
     };
     this.addColor = function() {
       data.palette.push("white");
-      build(document.getElementById(paletteId),data.palette.map(function(color,n){
+      build(document.getElementById(paletteId),data.palette.filter(function(c,i){return i>0;}).map(function(color,n){
         var index = n + 1;
         return {
           tag: "li",
@@ -99,12 +98,12 @@
       }));
       buildCanvas(data.grid);
     };
-    var updateColor = function(index) {
+    this.updateColor = function(index) {
       var colorField = document.getElementById("color" + index);
       var colorObj = document.getElementById("r" + index);
       var fill = colorObj.attributes.getNamedItem("fill");
       fill.value = colorField.value;
-      data.color[n] = colorField.value;
+      data.palette[index] = colorField.value;
       updateSaveData();
     }
     this.resize = function() {
@@ -114,11 +113,9 @@
       updateSaveData();
     };
     this.setColor = function(x, y) {
-      console.log("set color: (" + x + "," + y + ")");
-      var colorIndex = range(colorCount).map(function(n){
+      var colorIndex = data.palette.map(function(c,n){
         return document.getElementById("colorSelect" + n);
       }).filter(function(radio,n){
-        console.log("checking radio item " + n);
         return radio.checked;
       }).map(function(radio){
         return radio.value;
