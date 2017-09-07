@@ -229,7 +229,8 @@
 
 (defn build-api [& routes]
   (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
-        routing (index-routing (flatten routes))]
+        routing (index-routing (flatten routes))
+        _ (println (keys routing))]
     (build-static-processor static
                             (fn [req]
                               (try

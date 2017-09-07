@@ -1,13 +1,13 @@
 (ns scullery-plateau.routings
   (:require [routings.core :as r]
-            [schema.core :as s]
+            [schema.core :as schema]
             [scullery-plateau.raster :as img]
             [ring.util.io :as io]
             [clj-pdf.core :as pdf]
             [clojure.edn :as edn]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
-            [clojure.string :refer :all]
+            [clojure.string :as s]
             [template.core :as tpl]
             [xml-short.core :as short]
             [cheshire.core :as json]
@@ -44,7 +44,7 @@
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
-                                {:query [{:x s/Int :y s/Int} {:x parse-int :y parse-int}]}
+                                {:query [{:x schema/Int :y schema/Int} {:x parse-int :y parse-int}]}
                                 (fn [{:keys [query]}]
                                   (let [{:keys [x y]} query]
                                     (+ x y)))))
@@ -52,7 +52,7 @@
                          (r/GET "/:app"
                                 {}
                                 {"content-type" "text/html"}
-                                {:path [{:app s/Keyword} {:app keyword}]}
+                                {:path [{:app schema/Keyword} {:app keyword}]}
                                 (fn [{:keys [path]}]
                                   (let [apps (->> "resources/tpl/apps.edn"
                                                   (slurp)
@@ -67,17 +67,17 @@
                                     (r/POST "/png"
                                             {"content-type" "application/x-www-form-urlencoded"}
                                             {"content-type" "image/png"}
-                                            {:body [s/Any identity]}
+                                            {:body [schema/Any identity]}
                                             (raster-img :png))
                                     (r/POST "/jpeg"
                                             {"content-type" "application/x-www-form-urlencoded"}
                                             {"content-type" "image/jpeg"}
-                                            {:body [s/Any identity]}
+                                            {:body [schema/Any identity]}
                                             (raster-img :jpeg)))
                          (r/POST "/pdf"
                                  {"content-type" "application/x-www-form-urlencoded"}
                                  {"content-type" "application/pdf"}
-                                 {:body [s/Any identity]}
+                                 {:body [schema/Any identity]}
                                  (fn [{:keys [body]}]
                                    (let [{:keys [pdf]} body
                                          pdf (edn/read-string (URLDecoder/decode pdf))]
@@ -128,21 +128,29 @@
                                         :savedata
                                         (URLDecoder/decode)
                                         (json/parse-string))))
-                         (r/POST "/pixel/art.png"
+                         (r/POST "/pixel/png/art.png"
                                  {"content-type" "application/x-www-form-urlencoded"}
                                  {"content-type" "image/png"}
                                  {}
                                  (fn [{:keys [body]}]
+                                   (println "here")
+                                   (println "body: " body)
                                    (let [{:keys [pngdata pixelsize]} body
                                          size (Integer/parseInt pixelsize)
-                                         data (json/parse-string (URLDecoder/decode pngdata) {:key-fn keyword})
-                                         {:keys [width height palette grid]} data
+                                         _ (println "data: " pngdata)
+                                         pngdata (URLDecoder/decode pngdata)
+                                         _ (println "data: " pngdata)
+                                         pngdata (json/parse-string pngdata true)
+                                         _ (println "data: " pngdata)
+                                         {:keys [width height palette grid]} pngdata
+                                         _ (println "width: " width)
+                                         _ (println "height: " height)
+                                         [width height] (map #(Integer/parseInt %) [width height])
                                          grid (mapv (fn [[k v]]
                                                       (let [colorIndex (Integer/parseInt v)
-                                                            [x y] (map #(Integer/parseInt %) (split k #"-"))]
+                                                            [x y] (map #(Integer/parseInt %) (s/split (name k) #"-"))]
                                                         {:x x :y y :c colorIndex})) grid)]
-                                     (raster-svg :png (draw/draw-pixels size width height palette grid)))))
-                         )
+                                     (raster-svg :png (draw/draw-pixels size width height palette grid))))))
               (r/context "/state"
                          (r/GET "/test"
                                 {}

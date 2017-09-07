@@ -1,9 +1,11 @@
 (function(){
-  window.Controller = function(data,instanceName,paletteId,widthFieldId,heightFieldId,canvasId,saveDataId) {
+  window.Controller = function(data,instanceName,paletteId,widthFieldId,heightFieldId,canvasId,dataFields) {
     var me = this;
     var coeff = 25;
     var updateSaveData = function() {
-      document.getElementById(saveDataId).value = JSON.stringify(data);
+      dataFields.forEach(function(id){
+          document.getElementById(id).value = JSON.stringify(data);
+      });
     }
     var buildCanvas = function(grid) {
       build(document.getElementById(canvasId),[{

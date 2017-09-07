@@ -189,3 +189,4 @@
     (io/copy (ByteArrayInputStream. (.toByteArray out))
              (FileOutputStream. "resources/bytes.png"))
     ))
+

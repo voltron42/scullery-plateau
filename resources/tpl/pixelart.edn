@@ -19,7 +19,7 @@
   [form {id "saveform" action (str "./pixel/" :filename) method "post" target "_blank"}
    [input {type "hidden" id "savedata" name "savedata" value ""}]
    [input {type "submit" value "Save"}]]
-  [form {id "saveform" action (str "./pixel/art.png") method "post" target "_blank"}
+  [form {id "pngform" action (str "./pixel/png/art.png") method "post" target "_blank"}
    [input {type "hidden" id "pngdata" name "pngdata" value ""}]
    [label {for "pixelsize"} " Pixel Size: "]
    [input {type "number" name "pixelsize" value "1" min "1"}]
