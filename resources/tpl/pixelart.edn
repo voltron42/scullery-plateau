@@ -3,7 +3,7 @@
   [title "sample"]
   [script {src "../script/state.js"} ""]
   [script {src "../script/docbuilder.js"} ""]
-  [script {src "../script/pixelart.js"} ""]
+  [script {src "../script/pixel.js"} ""]
   [script {type "text/javascript"}
    (str
      "(function() {\n"
