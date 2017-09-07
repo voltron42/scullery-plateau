@@ -7,29 +7,34 @@
             [clojure.edn :as edn]
             [clojure.xml :as xml]
             [clojure.zip :as zip]
+            [clojure.string :refer :all]
             [template.core :as tpl]
             [xml-short.core :as short]
-            [cheshire.core :as json])
+            [cheshire.core :as json]
+            [scullery-plateau.draw :as draw])
   (:import (java.io File OutputStream ByteArrayOutputStream ByteArrayInputStream FileInputStream)
            (java.net URLDecoder)))
 
 (defn- parse-int [val] (Integer/parseInt val))
 
+(defn- raster-svg [type svg]
+  (let [out (ByteArrayOutputStream.)]
+    (img/rasterize type {} svg out)
+    (ByteArrayInputStream. (.toByteArray out))))
+
 (defn- raster-img [type]
   (fn [{:keys [body]}]
     (let [{:keys [svg]} body
-          svg (edn/read-string (URLDecoder/decode svg))
-          out (ByteArrayOutputStream.)]
-      (img/rasterize :png {} svg out)
-      (ByteArrayInputStream. (.toByteArray out)))))
-
-(def ^:private page404 "Not Found")
+          svg (edn/read-string (URLDecoder/decode svg))]
+      (raster-svg type svg))))
 
 (def ^:private build-template (tpl/build-template-factory {}))
 
 (defn- build-page [filepath data]
   (let [tpl (->> (str filepath ".edn") (slurp) (edn/read-string) (build-template))]
     (->> data (tpl) (short/x-pand) (xml/emit-element) (with-out-str))))
+
+(def ^:private page404 (build-page "resources/tpl/404" {}))
 
 (defn build-app []
             (r/build-api
@@ -122,7 +127,22 @@
                                    (->> body
                                         :savedata
                                         (URLDecoder/decode)
-                                        (json/parse-string)))))
+                                        (json/parse-string))))
+                         (r/POST "/pixel/art.png"
+                                 {"content-type" "application/x-www-form-urlencoded"}
+                                 {"content-type" "image/png"}
+                                 {}
+                                 (fn [{:keys [body]}]
+                                   (let [{:keys [pngdata pixelsize]} body
+                                         size (Integer/parseInt pixelsize)
+                                         data (json/parse-string (URLDecoder/decode pngdata) {:key-fn keyword})
+                                         {:keys [width height palette grid]} data
+                                         grid (mapv (fn [[k v]]
+                                                      (let [colorIndex (Integer/parseInt v)
+                                                            [x y] (map #(Integer/parseInt %) (split k #"-"))]
+                                                        {:x x :y y :c colorIndex})) grid)]
+                                     (raster-svg :png (draw/draw-pixels size width height palette grid)))))
+                         )
               (r/context "/state"
                          (r/GET "/test"
                                 {}

@@ -1,5 +1,6 @@
 (function(){
   window.Controller = function(data,instanceName,paletteId,widthFieldId,heightFieldId,canvasId,saveDataId) {
+    var me = this;
     var coeff = 25;
     var updateSaveData = function() {
       document.getElementById(saveDataId).value = JSON.stringify(data);
@@ -63,7 +64,7 @@
         document.getElementById(heightFieldId).value = data.height;
         data.palette.forEach(function(color, index) {
           while(document.getElementById("color" + index) === null) {
-            this.addColor();
+            me.addColor();
           }
           document.getElementById("color" + index).value = color;
         });
