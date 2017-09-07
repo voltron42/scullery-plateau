@@ -62,10 +62,10 @@
     this.init = function() {
         document.getElementById(widthFieldId).value = data.width;
         document.getElementById(heightFieldId).value = data.height;
-        while(colorCount < data.palette.length) {
-          this.addColor();
-        }
         data.palette.forEach(function(color, index) {
+          while(document.getElementById("color" + index) === null) {
+            this.addColor();
+          }
           document.getElementById("color" + index).value = color;
         });
         buildCanvas(data.grid);
