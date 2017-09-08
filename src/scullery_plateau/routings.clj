@@ -145,7 +145,6 @@
                                          {:keys [width height palette grid]} pngdata
                                          _ (println "width: " width)
                                          _ (println "height: " height)
-                                         [width height] (map #(Integer/parseInt %) [width height])
                                          grid (mapv (fn [[k v]]
                                                       (let [colorIndex (Integer/parseInt v)
                                                             [x y] (map #(Integer/parseInt %) (s/split (name k) #"-"))]

@@ -110,8 +110,8 @@
       updateSaveData();
     }
     this.resize = function() {
-      data.width = document.getElementById(widthFieldId).value;
-      data.height = document.getElementById(heightFieldId).value;
+      data.width = parseInt(document.getElementById(widthFieldId).value);
+      data.height = parseInt(document.getElementById(heightFieldId).value);
       buildCanvas(data.grid);
       updateSaveData();
     };

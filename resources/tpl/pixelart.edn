@@ -1,6 +1,6 @@
 [html
  [head
-  [title "sample"]
+  [title "Pixel Art"]
   [script {src "../script/docbuilder.js"} ""]
   [script {src "../script/pixel.js"} ""]
   [script {type "text/javascript"}
