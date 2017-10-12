@@ -112,20 +112,18 @@
                                       {}
                                       {"content-type" "text/html"}
                                       {}
-                                      (fn [{:keys [multipart]}]
-                                        (->> multipart
-                                             :file
+                                      (fn [{{:keys [file]} :multipart}]
+                                        (->> file
                                              :tempfile
                                              (slurp)
-                                             (assoc (select-keys (:file multipart) [:filename]) :data)
+                                             (assoc (select-keys file [:filename]) :data)
                                              (build-page "resources/tpl/pixelart"))))
                          (r/POST "/pixel/:filename"
                                  {"content-type" "application/x-www-form-urlencoded"}
                                  {"content-type" "application/json"}
                                  {}
-                                 (fn [{:keys [body]}]
-                                   (->> body
-                                        :savedata
+                                 (fn [{{:keys [savedata]} :body}]
+                                   (->> savedata
                                         (URLDecoder/decode)
                                         (json/parse-string))))
                          (r/POST "/pixel/png/art.png"

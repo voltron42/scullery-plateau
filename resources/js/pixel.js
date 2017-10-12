@@ -135,5 +135,24 @@
       }
       updateSaveData();
     }
+    this.transform = function(type) {
+        var tf = buildTypes(data.width, data.height)[type];
+        var newGrid = {};
+        Object.keys(data.grid).map(function(id){
+          var point = id.split("-").map(parseInt);
+          return {
+            x: tf.x.apply(tf, point),
+            y: tf.y.apply(tf, point),
+            color: data.grid[id]
+          }
+        }).filter(function(obj){
+          return (obj.x < data.width) && (obj.y < data.height);
+        }).forEach(function(obj){
+          var id = obj.x + "-" + obj.y;
+          newGrid[id] = obj.color;
+        });
+        data.grid = newGrid;
+        buildCanvas(data.grid);
+    }
   };
 })()

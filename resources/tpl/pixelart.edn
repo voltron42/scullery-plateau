@@ -38,6 +38,11 @@
    [input {type "number" id "widthField" name "width" value "0" onChange "ctrl.resize()"}]
    [label {for "height"} " Height: "]
    [input {type "number" id "heightField" name "height" value "0" onChange "ctrl.resize()"}]
+   br
+   [button {onClick "ctrl.transform('horiz')"} "Flip Horizontal"]
+   [button {onClick "ctrl.transform('vert')"} "Flip Vertical"]
+   [button {onClick "ctrl.transform('right')"} "Rotate Right"]
+   [button {onClick "ctrl.transform('left')"} "Rotate Left"]
    ]
   br
   [div {id "canvas"}]
