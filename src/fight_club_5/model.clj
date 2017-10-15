@@ -40,10 +40,12 @@
 
 (s/defschema Trait-Text s/Str)
 
+(s/defschema Traits {Trait-Name [Trait-Text]})
+
 (s/defschema Background
   {:name s/Str
    :proficiency #{Skill}
-   :traits {Trait-Name [Trait-Text]}})
+   :traits Traits})
 
 (s/defschema Modifier
   {:category s/Str
@@ -65,15 +67,87 @@
    :features [Feature]
    :slots [s/Int]})
 
+(s/defschema Proficiency #{(s/either Skill Ability)})
+
 (s/defschema Class
   {:name s/Str
    :hd s/Int
-   :proficiency #{(s/either Skill Ability)}
+   :proficiency Proficiency
    (s/optional-key :spell-ability) Ability
    :autolevel Autolevel})
 
+(s/defschema Size (s/enum :M :L))
+
+(s/defschema Ability-Bonus
+  {:ability Ability
+   :bonus s/Int})
+
+(s/defschema Speed s/Str)
+
 (s/defschema Race
-  {})
+  {:name s/Str
+   :size Size
+   :speed Speed
+   :ability-bonuses #{Ability-Bonus}
+   (s/optional-key :proficiency) Proficiency
+   :traits Traits})
+
+(s/defschema NPC-Type s/Str)
+
+(s/defschema Alignment
+  (s/enum "neutral"
+          "neutral good"
+          "neutral evil"
+          "chaotic neutral"
+          "lawful neutral"
+          "chaotic good"
+          "chaotic evil"
+          "lawful good"
+          "lawful evil"))
+
+(s/defschema Roll
+  {:number-of s/Int
+   :side-count s/Int
+   :bonus s/Int})
+
+(s/defschema HP
+  {:default s/Int
+   :custom Roll})
+
+(s/defschema Language
+  (s/enum "Auran"
+          "Aarakocra"
+
+          ))
+
+(s/defschema CR s/Num)
+
+(s/defschema NPC-Action
+  {:name   s/Str
+   :text   [s/Str]
+   :attack {:name   s/Str
+            :bonus  s/Int
+            :damage Roll}})
+
+(s/defschema NPC
+  {:name s/Str
+   :size Size
+   :type NPC-Type
+   :alignment Alignment
+   :ac s/Int
+   :hp HP
+   :speed Speed
+   :stats {Ability s/Int}
+   :saves {Ability s/Int}
+   :skills {Skill s/Int}
+   :senses s/Str
+   :passive s/Int
+   :languages #{Language}
+   :cr CR
+   :traits #{NPC-Action}
+   :action #{NPC-Action}
+   :legendary #{NPC-Action}
+   })
 
 (s/defschema Compendium
   {:spells [Spell]
@@ -81,4 +155,4 @@
    :feats [Feat]
    :classes [Class]
    :races [Race]
-   })
+   :npcs [NPC]})
