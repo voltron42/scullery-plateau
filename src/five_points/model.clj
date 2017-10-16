@@ -15,7 +15,7 @@
 (s/defschema Stats {Stat Score})
 
 (s/defschema Prerequisite
-  (s/either s/Str ))
+  (s/either s/Str))
 
 (s/defschema Kin
   {:name s/Str
