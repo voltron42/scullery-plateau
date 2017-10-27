@@ -40,6 +40,9 @@
             (r/build-api
               {"/favicon.ico" ["resources/icon/favicon.ico"]
                "/script" ["/resources/js"]
+               "/pages" ["/resources/pages"]
+               "/css" ["/resources/css"]
+               "/jquery" ["/resources/jquery"]
                "/edn" ["/resources/edn" #(build-page % {})]}
               (r/context "/sample"
                          (r/GET "/plus" {}

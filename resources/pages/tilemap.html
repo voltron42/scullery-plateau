@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Practice Mobile</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tabs - jQuery Mobile Demos</title>
+    <link rel="shortcut icon" href="../favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
+    <link rel="stylesheet" href="../css/jquery.mobile-1.4.5.css">
+    <script src="../jquery/jquery.js"></script>
+    <script src="../jquery/jquery.mobile-1.4.5.js"></script>
+    <style id="inset-tablist">
+		.tablist-left {
+			width: 25%;
+			display: inline-block;
+		}
+		.tablist-content {
+			width: 60%;
+			display: inline-block;
+			vertical-align: top;
+			margin-left: 5%;
+		}
+		.scrollpane {
+		    width: 100%;
+		    height: 100%;
+		    overflow: scroll;
+		}
+
+    </style>
+</head>
+<body>
+<div data-role="tabs" id="tabs">
+    <div data-role="navbar">
+        <ul>
+            <li><a href="#tiles" data-ajax="false">Tiles</a></li>
+            <li><a href="#map" data-ajax="false">Map</a></li>
+        </ul>
+    </div>
+    <div id="tiles" class="ui-body-d ui-content">
+        <div data-role="header">
+            <a href="#tileMenu" data-rel="popup" data-transition="slideup"
+               class="ui-btn-left ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-left ui-icon-bars"></a>
+            <h1>Tiles</h1>
+            <div data-role="popup" id="tileMenu" data-theme="none">
+                <div data-role="collapsibleset" data-theme="b" data-content-theme="a" data-collapsed-icon="arrow-r"
+                     data-expanded-icon="arrow-d" style="margin:0; width:250px;">
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>File</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">New</a></li>
+                            <li><a href="#" data-rel="dialog">Load</a></li>
+                            <li><a href="#" data-rel="dialog">Save</a></li>
+                            <li><a href="#" data-rel="dialog">Publish Tiles</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>Build</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">Add</a></li>
+                            <li><a href="#" data-rel="dialog">Copy</a></li>
+                            <li><a href="#" data-rel="dialog">Switch</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>View</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">Zoom In</a></li>
+                            <li><a href="#" data-rel="dialog">Zoom Out</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>Draw</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">Rotate Left</a></li>
+                            <li><a href="#" data-rel="dialog">Rotate Right</a></li>
+                            <li><a href="#" data-rel="dialog">Flip Horizontal</a></li>
+                            <li><a href="#" data-rel="dialog">Flip Vertical</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Up</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Down</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Left</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Right</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                </div><!-- /collapsible set -->
+            </div><!-- /popup -->
+        </div>
+        <div class="ui-grid-c ui-responsive">
+            <div class="ui-block-a">
+                <div class="ui-body ui-body-d">
+                    <input type="color" id="c0"/>
+                    <label for="color0">BG</label>
+                    <input type="radio" name="color" id="color0"/>
+                </div>
+            </div>
+            <div class="ui-block-b">
+                <div class="ui-body ui-body-d">
+                    <input type="color" id="c1"/>
+                    <label for="color1">1</label>
+                    <input type="radio" name="color" id="color1"/>
+                </div>
+            </div>
+            <div class="ui-block-c">
+                <div class="ui-body ui-body-d">
+                    <input type="color" id="c2"/>
+                    <label for="color2">2</label>
+                    <input type="radio" name="color" id="color2"/>
+                </div>
+            </div>
+            <div class="ui-block-d">
+                <div class="ui-body ui-body-d">
+                    <input type="color" id="c3"/>
+                    <label for="color3">3</label>
+                    <input type="radio" name="color" id="color3"/>
+                </div>
+            </div>
+        </div>
+        <div role="main" class="ui-content ui-responsive">
+            <div class="scrollpane">
+                <svg id="tileframe" width="1600" height="1600" viewBox="0 0 160 160">
+                    <rect width="160" height="160" fill="white" stroke="black" stroke-width="1"/>
+                    <rect width="10" height="10" fill="white" stroke="black" stroke-width="1"/>
+                    <rect x="10" width="10" height="10" fill="white" stroke="black" stroke-width="1"/>
+                    <rect y="10" width="10" height="10" fill="white" stroke="black" stroke-width="1"/>
+                    <rect x="10" y="10" width="10" height="10" fill="white" stroke="black" stroke-width="1"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <div id="map" class="ui-body-d ui-content">
+        <div data-role="header">
+            <a href="#mapMenu" data-rel="popup" data-transition="slideup"
+               class="ui-btn-left ui-btn ui-btn-inline ui-mini ui-corner-all ui-btn-icon-left ui-icon-bars"></a>
+            <h1>Map</h1>
+            <div data-role="popup" id="mapMenu" data-theme="none">
+                <div data-role="collapsibleset" data-theme="b" data-content-theme="a" data-collapsed-icon="arrow-r"
+                     data-expanded-icon="arrow-d" style="margin:0; width:250px;">
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>File</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">New</a></li>
+                            <li><a href="#" data-rel="dialog">Load</a></li>
+                            <li><a href="#" data-rel="dialog">Save</a></li>
+                            <li><a href="#" data-rel="dialog">Publish Map</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>View</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">Zoom In</a></li>
+                            <li><a href="#" data-rel="dialog">Zoom Out</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                    <div data-role="collapsible" data-inset="false">
+                        <h2>Draw</h2>
+                        <ul data-role="listview">
+                            <li><a href="#" data-rel="dialog">Rotate Left</a></li>
+                            <li><a href="#" data-rel="dialog">Rotate Right</a></li>
+                            <li><a href="#" data-rel="dialog">Flip Horizontal</a></li>
+                            <li><a href="#" data-rel="dialog">Flip Vertical</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Up</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Down</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Left</a></li>
+                            <li><a href="#" data-rel="dialog">Shift Right</a></li>
+                        </ul>
+                    </div><!-- /collapsible -->
+                </div><!-- /collapsible set -->
+            </div><!-- /popup -->
+        </div>
+    </div>
+</div>
+</body>
+</html>

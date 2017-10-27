@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Five-Points Builder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tabs - jQuery Mobile Demos</title>
+    <link rel="shortcut icon" href="../favicon.ico">
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
+    <link rel="stylesheet" href="../css/jquery.mobile-1.4.5.css">
+    <script src="../jquery/jquery.js"></script>
+    <script src="../jquery/jquery.mobile-1.4.5.js"></script>
+    <style id="inset-tablist">
+		.tablist-left {
+			width: 25%;
+			display: inline-block;
+		}
+		.tablist-content {
+			width: 60%;
+			display: inline-block;
+			vertical-align: top;
+			margin-left: 5%;
+		}
+
+    </style>
+</head>
+<body>
+<div data-role="tabs" id="outertabs">
+    <div data-role="navbar">
+        <ul>
+            <li><a href="#dm" data-ajax="false">DM</a></li>
+            <li><a href="#char" data-ajax="false">Character</a></li>
+        </ul>
+    </div>
+    <div id="dm" class="ui-body-d ui-content">
+        <div data-role="tabs" id="tabs">
+            <div data-role="navbar">
+                <ul>
+                    <li><a href="#kin" data-ajax="false">Kin</a></li>
+                    <li><a href="#caste" data-ajax="false">Caste</a></li>
+                    <li><a href="#skill" data-ajax="false">Skill</a></li>
+                    <li><a href="#skill-set" data-ajax="false">Skill-Set</a></li>
+                    <li><a href="#item" data-ajax="false">Item</a></li>
+                </ul>
+            </div>
+            <div id="kin" class="ui-body-d ui-content">
+                <h1>Kin</h1>
+            </div>
+            <div id="caste" class="ui-body-d ui-content">
+                <h1>Caste</h1>
+            </div>
+            <div id="skill" class="ui-body-d ui-content">
+                <h1>Skill</h1>
+            </div>
+            <div id="skill-set" class="ui-body-d ui-content">
+                <h1>Skill-Set</h1>
+            </div>
+            <div id="item" class="ui-body-d ui-content">
+                <h1>Item</h1>
+            </div>
+        </div>
+    </div>
+    <div id="char" class="ui-body-d ui-content">
+        <h1>Character</h1>
+    </div>
+</div>
+</body>
+</html>
