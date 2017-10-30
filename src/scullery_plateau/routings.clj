@@ -48,7 +48,7 @@
                      {"content-type" "text/html"}
                      {}
                      (fn [_]
-                       (build-page "/resources/tpl/home"
+                       (build-page "resources/tpl/home"
                                    {:links [{:link "draw/pixel"
                                              :label "Pixel Art"}]})))
               (r/context "/sample"

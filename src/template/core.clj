@@ -32,12 +32,8 @@
     (list? tpl) (let [[op & args] tpl]
                   (cond
                     (map? op) (let [[label col] (first op)
-                                    _ (println "label: " label)
-                                    _ (println "col: " col)
                                     col (resolve-col col op-map data resolve-tpl)
-                                    _ (println "col: " col)
                                     new-data (label-data label col)
-                                    _ (println "new-data: " new-data)
                                     append (fn [out item]
                                              (reduce #(into %1 [(resolve-tpl
                                                                   op-map
@@ -47,7 +43,6 @@
                                     output (if (vector? new-data)
                                              (reduce append out-data new-data)
                                              (append out-data new-data))]
-                                (println output)
                                 output)
                     (list? op) (when (resolve-tpl op-map data [] op)
                                  (reduce (partial resolve-tpl op-map data) out-data args))
