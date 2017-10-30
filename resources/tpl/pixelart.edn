@@ -30,7 +30,7 @@
    br
    [input {type "radio" name "colors" id "colorSelect0" value "0" checked true}]
    [label {for "backgroundColor"} " Background Color: "]
-   [input {type "text" id "color0" value "white" onChange "ctrl.updateColor(0)"}]
+   [input {type "color" id "color0" value "white" onChange "ctrl.updateColor(0)"}]
    br
    [ol {id "palette"} ""]
    br

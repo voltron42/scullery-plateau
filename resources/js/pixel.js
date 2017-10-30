@@ -91,7 +91,7 @@
           },{
             tag: "input",
             attrs: {
-              type: "text",
+              type: "color",
               id: "color" + index,
               value: color,
               onChange: instanceName + ".updateColor(" + index + ")"
