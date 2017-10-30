@@ -211,12 +211,20 @@
         (flatten routes)))
 
 (defn build-static-processor [statics wrapped]
-  (let [my-map (reduce (fn [out [k v]] (assoc out (split-path k) (into [(split-path (first v))] (rest v)))) {} statics)]
+  (let [my-map (reduce (fn [out [k v]]
+                         (assoc out (split-path k)
+                                    (into [(split-path (first v))]
+                                          (rest v))))
+                       {}
+                       statics)]
     (fn [req]
       (let [uri (split-path (:uri req))
             paths (first (filter (fn [[k _]]
-                                  (and (< (count k) (count uri))
-                                       (every? (partial apply =) (mapv vector k uri)))) my-map))]
+                                  (and (< (count k)
+                                          (count uri))
+                                       (every? (partial apply =)
+                                               (mapv vector k uri))))
+                                 my-map))]
         (if-not (nil? paths)
           (let [[path [dir coerce]] paths
                 coerce (if (nil? coerce) #(FileInputStream. ^String %) coerce)
@@ -229,8 +237,7 @@
 
 (defn build-api [& routes]
   (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
-        routing (index-routing (flatten routes))
-        _ (println (keys routing))]
+        routing (index-routing (flatten routes))]
     (build-static-processor static
                             (fn [req]
                               (try
@@ -242,6 +249,3 @@
                                 (catch Throwable t
                                   (println (.getMessage t))
                                   (.printStackTrace t)))))))
-
-(defn loadable-page [path tpl page-title default-data default-filename & js-files]
-  )

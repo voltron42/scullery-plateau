@@ -187,6 +187,5 @@
                    out)
     (println (.size out))
     (io/copy (ByteArrayInputStream. (.toByteArray out))
-             (FileOutputStream. "resources/bytes.png"))
-    ))
+             (FileOutputStream. "resources/bytes.png"))))
 

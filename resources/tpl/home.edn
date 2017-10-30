@@ -1,0 +1,7 @@
+[html
+ [head
+  [title "Scullery Plateau"]]
+ [body [div [ul
+             ({:a :links}
+               [li [a {href :a/link}
+                    :a/label]])]]]]

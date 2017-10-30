@@ -61,6 +61,18 @@
                     [li "(x,y) = (2,4)"]]]
     (is (= ex-result (((build-template-factory {}) ex-tpl) ex-data)))))
 
+(deftest test-example-3
+  (let [tpl '({:a :obj}
+           [a {href :a/link}
+                :a/label])
+        data {:obj [{:link "#abc"
+                     :label "Title"}
+                    {:link "#xyz"
+                     :label "Title 2"}]}
+        expected '[[a {href "#abc"} "Title"]
+                   [a {href "#xyz"} "Title 2"]]]
+    (is (= expected (((build-template-factory {'get get}) tpl) data)))))
+
 (deftest test-flatten-output-1
   (is (= (flatten-output '[ul
                           [[li

@@ -44,10 +44,18 @@
                "/css" ["/resources/css"]
                "/jquery" ["/resources/jquery"]
                "/edn" ["/resources/edn" #(build-page % {})]}
+              (r/GET "/" {}
+                     {"content-type" "text/html"}
+                     {}
+                     (fn [_]
+                       (build-page "/resources/tpl/home.edn"
+                                   {:links [{:link "draw/pixel"
+                                             :label "Pixel Art"}]})))
               (r/context "/sample"
                          (r/GET "/plus" {}
                                 {"content-type" "text/plain"}
-                                {:query [{:x schema/Int :y schema/Int} {:x parse-int :y parse-int}]}
+                                {:query [{:x schema/Int :y schema/Int}
+                                         {:x parse-int :y parse-int}]}
                                 (fn [{:keys [query]}]
                                   (let [{:keys [x y]} query]
                                     (+ x y)))))
@@ -63,8 +71,7 @@
                                         {:keys [app]} path]
                                     (if-not (contains? apps app)
                                       page404
-                                      (build-page "resources/tpl/index" (apps app))
-                                      )))))
+                                      (build-page "resources/tpl/index" (apps app)))))))
               (r/context "/api"
                          (r/context "/svg"
                                     (r/POST "/png"
