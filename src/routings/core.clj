@@ -238,14 +238,16 @@
 (defn build-api [& routes]
   (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
         routing (index-routing (flatten routes))]
-    (build-static-processor static
-                            (fn [req]
-                              (try
-                                (let [path (split-path (:uri req))
-                                      route (get-route routing path (method req) (:headers req))]
-                                  (if (nil? route)
-                                    {:status 404 :body (str "Not Found")}
-                                    (route path req)))
-                                (catch Throwable t
-                                  (println (.getMessage t))
-                                  (.printStackTrace t)))))))
+    (build-static-processor
+      static
+      (fn [req]
+        (println req)
+        (try
+          (let [path (split-path (:uri req))
+                route (get-route routing path (method req) (:headers req))]
+            (if (nil? route)
+              {:status 404 :body (str "Not Found")}
+              (route path req)))
+          (catch Throwable t
+            (println (.getMessage t))
+            (.printStackTrace t)))))))

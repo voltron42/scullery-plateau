@@ -37,153 +37,149 @@
 (def ^:private page404 (build-page "resources/tpl/404" {}))
 
 (defn build-app []
-            (r/build-api
-              {"/favicon.ico" ["resources/icon/favicon.ico"]
-               "/script" ["/resources/js"]
-               "/pages" ["/resources/pages"]
-               "/css" ["/resources/css"]
-               "/jquery" ["/resources/jquery"]
-               "/edn" ["/resources/edn" #(build-page % {})]}
-              (r/GET "/" {}
-                     {"content-type" "text/html"}
-                     {}
-                     (fn [_]
-                       (build-page "resources/tpl/home"
-                                   {:links [{:link "draw/pixel"
-                                             :label "Pixel Art"}]})))
-              (r/context "/sample"
-                         (r/GET "/plus" {}
-                                {"content-type" "text/plain"}
-                                {:query [{:x schema/Int :y schema/Int}
-                                         {:x parse-int :y parse-int}]}
-                                (fn [{:keys [query]}]
-                                  (let [{:keys [x y]} query]
-                                    (+ x y)))))
-              (r/context "/apps"
-                         (r/GET "/:app"
-                                {}
-                                {"content-type" "text/html"}
-                                {:path [{:app schema/Keyword} {:app keyword}]}
-                                (fn [{:keys [path]}]
-                                  (let [apps (->> "resources/tpl/apps.edn"
-                                                  (slurp)
-                                                  (edn/read-string))
-                                        {:keys [app]} path]
-                                    (if-not (contains? apps app)
-                                      page404
-                                      (build-page "resources/tpl/index" (apps app)))))))
-              (r/context "/api"
-                         (r/context "/svg"
-                                    (r/POST "/png"
-                                            {"content-type" "application/x-www-form-urlencoded"}
-                                            {"content-type" "image/png"}
-                                            {:body [schema/Any identity]}
-                                            (raster-img :png))
-                                    (r/POST "/jpeg"
-                                            {"content-type" "application/x-www-form-urlencoded"}
-                                            {"content-type" "image/jpeg"}
-                                            {:body [schema/Any identity]}
-                                            (raster-img :jpeg)))
-                         (r/POST "/pdf"
-                                 {"content-type" "application/x-www-form-urlencoded"}
-                                 {"content-type" "application/pdf"}
-                                 {:body [schema/Any identity]}
-                                 (fn [{:keys [body]}]
-                                   (let [{:keys [pdf]} body
-                                         pdf (edn/read-string (URLDecoder/decode pdf))]
-                                     (io/piped-input-stream
-                                       (fn [^OutputStream out]
-                                         (pdf/pdf pdf out)
-                                         (.flush out))))))
-                         (r/Multipart "/form"
-                                 {}
-                                 {"content-type" "application/json"}
-                                 {}
-                                 (fn [{:keys [headers multipart]}]
-                                   (let [contents (->> multipart
-                                                       :file
-                                                       :tempfile
-                                                       (slurp))]
-                                     {:multipart multipart
-                                      :contents contents}))))
-              (r/context "/draw"
-                         (r/GET "/pixel"
-                                {}
-                                {"content-type" "text/html"}
-                                {}
-                                (fn [_]
-                                  (build-page "resources/tpl/pixelart"
-                                              {:data (json/generate-string {:width 10
-                                                                            :height 10
-                                                                            :palette ["white"]
-                                                                            :grid {}})
-                                               :filename "new.json"})))
-                         (r/Multipart "/pixel"
-                                      {}
-                                      {"content-type" "text/html"}
-                                      {}
-                                      (fn [{{:keys [file]} :multipart}]
-                                        (->> file
-                                             :tempfile
-                                             (slurp)
-                                             (assoc (select-keys file [:filename]) :data)
-                                             (build-page "resources/tpl/pixelart"))))
-                         (r/POST "/pixel/:filename"
-                                 {"content-type" "application/x-www-form-urlencoded"}
-                                 {"content-type" "application/json"}
-                                 {}
-                                 (fn [{{:keys [savedata]} :body}]
-                                   (->> savedata
-                                        (URLDecoder/decode)
-                                        (json/parse-string))))
-                         (r/POST "/pixel/png/art.png"
-                                 {"content-type" "application/x-www-form-urlencoded"}
-                                 {"content-type" "image/png"}
-                                 {}
-                                 (fn [{:keys [body]}]
-                                   (println "here")
-                                   (println "body: " body)
-                                   (let [{:keys [pngdata pixelsize]} body
-                                         size (Integer/parseInt pixelsize)
-                                         _ (println "data: " pngdata)
-                                         pngdata (URLDecoder/decode pngdata)
-                                         _ (println "data: " pngdata)
-                                         pngdata (json/parse-string pngdata true)
-                                         _ (println "data: " pngdata)
-                                         {:keys [width height palette grid]} pngdata
-                                         _ (println "width: " width)
-                                         _ (println "height: " height)
-                                         grid (mapv (fn [[k v]]
-                                                      (let [colorIndex (Integer/parseInt v)
-                                                            [x y] (map #(Integer/parseInt %) (s/split (name k) #"-"))]
-                                                        {:x x :y y :c colorIndex})) grid)]
-                                     (raster-svg :png (draw/draw-pixels size width height palette grid))))))
-              (r/context "/state"
-                         (r/GET "/test"
-                                {}
-                                {"content-type" "text/html"}
-                                {}
-                                (fn [_]
-                                  (build-page "resources/tpl/testapp"
-                                              {:data "{}"
-                                               :filename "new.json"})))
-                         (r/Multipart "/test"
-                                      {}
-                                      {"content-type" "text/html"}
-                                      {}
-                                      (fn [{:keys [multipart]}]
-                                        (->> multipart
+  (r/build-api
+    {:page404 page404
+     :static {"/favicon.ico" ["resources/icon/favicon.ico"]
+              "/script" ["/resources/js"]
+              "/pages" ["/resources/pages"]
+              "/css" ["/resources/css"]
+              "/jquery" ["/resources/jquery"]
+              "/edn" ["/resources/edn" #(build-page % {})]}}
+    (r/GET "/" {}
+           {"content-type" "text/html"}
+           {}
+           (fn [_]
+             (build-page "resources/tpl/home"
+                         {:links [{:link "draw/pixel"
+                                   :label "Pixel Art"}]})))
+    (r/context "/sample"
+               (r/GET "/plus" {}
+                      {"content-type" "text/plain"}
+                      {:query [{:x schema/Int :y schema/Int}
+                               {:x parse-int :y parse-int}]}
+                      (fn [{:keys [query]}]
+                        (let [{:keys [x y]} query]
+                          (+ x y)))))
+    (r/context "/apps"
+               (r/GET "/:app"
+                      {}
+                      {"content-type" "text/html"}
+                      {:path [{:app schema/Keyword} {:app keyword}]}
+                      (fn [{:keys [path]}]
+                        (let [apps (->> "resources/tpl/apps.edn"
+                                        (slurp)
+                                        (edn/read-string))
+                              {:keys [app]} path]
+                          (if-not (contains? apps app)
+                            page404
+                            (build-page "resources/tpl/index" (apps app)))))))
+    (r/context "/api"
+               (r/context "/svg"
+                          (r/POST "/png"
+                                  {"content-type" "application/x-www-form-urlencoded"}
+                                  {"content-type" "image/png"}
+                                  {:body [schema/Any identity]}
+                                  (raster-img :png))
+                          (r/POST "/jpeg"
+                                  {"content-type" "application/x-www-form-urlencoded"}
+                                  {"content-type" "image/jpeg"}
+                                  {:body [schema/Any identity]}
+                                  (raster-img :jpeg)))
+               (r/POST "/pdf"
+                       {"content-type" "application/x-www-form-urlencoded"}
+                       {"content-type" "application/pdf"}
+                       {:body [schema/Any identity]}
+                       (fn [{:keys [body]}]
+                         (let [{:keys [pdf]} body
+                               pdf (edn/read-string (URLDecoder/decode pdf))]
+                           (io/piped-input-stream
+                             (fn [^OutputStream out]
+                               (pdf/pdf pdf out)
+                               (.flush out))))))
+               (r/Multipart "/form"
+                       {}
+                       {"content-type" "application/json"}
+                       {}
+                       (fn [{:keys [headers multipart]}]
+                         (let [contents (->> multipart
                                              :file
                                              :tempfile
-                                             (slurp)
-                                             (assoc (select-keys (:file multipart) [:filename]) :data)
-                                             (build-page "resources/tpl/testapp"))))
-                         (r/POST "/test/:filename"
-                                      {"content-type" "application/x-www-form-urlencoded"}
-                                      {"content-type" "application/json"}
-                                      {}
-                                      (fn [{:keys [body]}]
-                                        (->> body
-                                             :savedata
-                                             (URLDecoder/decode)
-                                             (json/parse-string)))))))
+                                             (slurp))]
+                           {:multipart multipart
+                            :contents contents}))))
+    (r/context "/draw"
+               (r/GET "/pixel"
+                      {}
+                      {"content-type" "text/html"}
+                      {}
+                      (fn [_]
+                        (build-page "resources/tpl/pixelart"
+                                    {:data (json/generate-string {:width 10
+                                                                  :height 10
+                                                                  :palette ["white"]
+                                                                  :grid {}})
+                                     :filename "new.json"})))
+               (r/Multipart "/pixel"
+                            {}
+                            {"content-type" "text/html"}
+                            {}
+                            (fn [{{:keys [file]} :multipart}]
+                              (->> file
+                                   :tempfile
+                                   (slurp)
+                                   (assoc (select-keys file [:filename]) :data)
+                                   (build-page "resources/tpl/pixelart"))))
+               (r/POST "/pixel/:filename"
+                       {"content-type" "application/x-www-form-urlencoded"}
+                       {"content-type" "application/json"}
+                       {}
+                       (fn [{{:keys [savedata]} :body}]
+                         (->> savedata
+                              (URLDecoder/decode)
+                              (json/parse-string))))
+               (r/POST "/pixel/png/art.png"
+                       {"content-type" "application/x-www-form-urlencoded"}
+                       {"content-type" "image/png"}
+                       {}
+                       (fn [{:keys [body]}]
+                         (println "here")
+                         (println "body: " body)
+                         (let [{:keys [pngdata pixelsize]} body
+                               size (Integer/parseInt pixelsize)
+                               pngdata (URLDecoder/decode pngdata)
+                               pngdata (json/parse-string pngdata true)
+                               {:keys [width height palette grid]} pngdata
+                               grid (mapv (fn [[k v]]
+                                            (let [colorIndex (Integer/parseInt v)
+                                                  [x y] (map #(Integer/parseInt %) (s/split (name k) #"-"))]
+                                              {:x x :y y :c colorIndex})) grid)]
+                           (raster-svg :png (draw/draw-pixels size width height palette grid))))))
+    (r/context "/state"
+               (r/GET "/test"
+                      {}
+                      {"content-type" "text/html"}
+                      {}
+                      (fn [_]
+                        (build-page "resources/tpl/testapp"
+                                    {:data "{}"
+                                     :filename "new.json"})))
+               (r/Multipart "/test"
+                            {}
+                            {"content-type" "text/html"}
+                            {}
+                            (fn [{:keys [multipart]}]
+                              (->> multipart
+                                   :file
+                                   :tempfile
+                                   (slurp)
+                                   (assoc (select-keys (:file multipart) [:filename]) :data)
+                                   (build-page "resources/tpl/testapp"))))
+               (r/POST "/test/:filename"
+                            {"content-type" "application/x-www-form-urlencoded"}
+                            {"content-type" "application/json"}
+                            {}
+                            (fn [{:keys [body]}]
+                              (->> body
+                                   :savedata
+                                   (URLDecoder/decode)
+                                   (json/parse-string)))))))
