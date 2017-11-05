@@ -1,1 +1,7 @@
-[html [body "Not Found"]]
+[html
+ [head
+  [title "Scullery Plateau - Page Not Found"]]
+ [body {onLoad "document.getElementById('path').innerHTML = location.href"}
+  [h1 "404 - Page Not Found"]
+  [p "Hey, guess what, there's no page here:"]
+  [code {id "path"}]]]

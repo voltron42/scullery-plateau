@@ -210,7 +210,7 @@
           (Route. method is-multipart? (str path-str path) req-head resp-head schema action))
         (flatten routes)))
 
-(defn build-static-processor [statics wrapped]
+(defn build-static-processor [page404 statics wrapped]
   (let [my-map (reduce (fn [out [k v]]
                          (assoc out (split-path k)
                                     (into [(split-path (first v))]
@@ -232,20 +232,21 @@
             (try
               {:status 200 :body (coerce src)}
               (catch Exception e
-                {:status 404 :body "Not Found"})))
+                {:status 404 :body page404})))
           (wrapped req))))))
 
 (defn build-api [& routes]
-  (let [[static routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
+  (let [[{:keys [static page404]} routes] (if (map? (first routes)) [(first routes) (rest routes)] [{} routes])
         routing (index-routing (flatten routes))]
     (build-static-processor
+      page404
       static
       (fn [req]
         (try
           (let [path (split-path (:uri req))
                 route (get-route routing path (method req) (:headers req))]
             (if (nil? route)
-              {:status 404 :body (str "Not Found")}
+              {:status 404 :body page404}
               (route path req)))
           (catch Throwable t
             (println (.getMessage t))
