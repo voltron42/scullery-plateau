@@ -39,7 +39,7 @@
 (defn build-app []
   (r/build-api
     {:page404 page404
-     :static {"/favicon.ico" ["resources/icon/favicon.ico"]
+     :static {"/favicon.ico" ["/resources/icon/favicon.ico"]
               "/script" ["/resources/js"]
               "/pages" ["/resources/pages"]
               "/css" ["/resources/css"]
