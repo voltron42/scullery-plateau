@@ -1,5 +1,5 @@
 {:letterer {:title "Letterer"
-            :script "../script/letterer.edn.js"
+            :script "../script/letterer.js"
             :on-load "startup()"}
  :tilebuilder {:title "Tile Builder"
                :script "../script/tileBuilder.js"

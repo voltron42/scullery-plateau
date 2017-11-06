@@ -1,9 +1,28 @@
 [html
  [head
-  [title "Scullery Plateau"]]
+  [title "Scullery Plateau"]
+  [meta {charset "utf-8"}]
+  [meta {name "viewport"
+         content "width=device-width, initial-scale=1"}]
+  [link {rel "shortcut icon"
+         href "./favicon.ico"}]
+  [link {rel "stylesheet"
+         href "http://fonts.googleapis.com/css?family=Open+Sans:300,400,700"}]
+  [link {rel "stylesheet"
+         href "./css/jquery.mobile-1.4.5.css"}]
+  [script {src "./jquery/jquery.js"} ""]
+  [script {src "./jquery/jquery.mobile-1.4.5.js"} ""]
+  [style {id "inset-tablist"}
+   (css
+     {".tablist-left" {"width" "25%"
+                       "display" "inline-block"}
+      ".tablist-content" {"width" "60%"
+                          "display" "inline-block"
+                          "vertical-align" "top"
+                          "margin-left" "5%"}})]]
  [body
   [h2 "Scullery Plateau"]
-  [div [ul
-             ({:a :links}
-               [li [a {href :a/link}
-                    :a/label]])]]]]
+  [div [ul {data-role "listview"}
+        ({:a :links}
+          [li [a {href :a/link}
+               :a/label]])]]]]

@@ -28,7 +28,23 @@
           svg (edn/read-string (URLDecoder/decode svg))]
       (raster-svg type svg))))
 
-(def ^:private build-template (tpl/build-template-factory {}))
+(defn- stringify-key [k]
+  (if (or (keyword? k) (symbol? k))
+    (name k)
+    (str k)))
+
+(defn- stringify-map [delim tpl-fn key-fn val-fn]
+  (fn [col]
+    (s/join delim
+            (mapv (fn [[k v]]
+                    (tpl-fn key-fn (val-fn v)))
+                  col))))
+
+(def ^:private build-template (tpl/build-template-factory {'css (fn [css]
+                                                                  (stringify-map
+                                                                    "\n" #(str %1 "{\n" %2 "\n}") stringify-key
+                                                                    (stringify-map
+                                                                      "\n" #(str %1 ": " %2 ";") stringify-key stringify-key)))}))
 
 (defn- build-page [filepath data]
   (let [tpl (->> (str filepath ".edn") (slurp) (edn/read-string) (build-template))]
@@ -50,16 +66,18 @@
            {}
            (fn [_]
              (build-page "resources/tpl/home"
-                         {:links [{:link "draw/pixel"
-                                   :label "Pixel Art"}]})))
-    (r/context "/sample"
-               (r/GET "/plus" {}
-                      {"content-type" "text/plain"}
-                      {:query [{:x schema/Int :y schema/Int}
-                               {:x parse-int :y parse-int}]}
-                      (fn [{:keys [query]}]
-                        (let [{:keys [x y]} query]
-                          (+ x y)))))
+                         {:links [
+                                  {:link "api/pdf" :label "PDF Builder Demo"}
+                                  {:link "api/svg/png" :label "PNG SVG Builder Demo"}
+                                  {:link "api/svg/jpeg" :label "JPEG SVG Builder Demo"}
+                                  {:link "api/pdf" :label "PDF Builder Demo"}
+                                  {:link "draw/pixel" :label "Pixel Art"}
+                                  {:link "apps/letterer" :label "Letterer"}
+                                  {:link "apps/tilebuilder" :label "Tile Builder"}
+                                  {:link "pages/tilemap.html" :label "Tile Builder JQuery UI"}
+                                  {:link "pages/five-points.html" :label "Five Points JQuery UI"}
+                                  {:link "pages/color.html" :label "Color Picker Demo UI"}
+                                  ]})))
     (r/context "/apps"
                (r/GET "/:app"
                       {}
@@ -154,32 +172,4 @@
                                                   [x y] (map #(Integer/parseInt %) (s/split (name k) #"-"))]
                                               {:x x :y y :c colorIndex})) grid)]
                            (raster-svg :png (draw/draw-pixels size width height palette grid))))))
-    (r/context "/state"
-               (r/GET "/test"
-                      {}
-                      {"content-type" "text/html"}
-                      {}
-                      (fn [_]
-                        (build-page "resources/tpl/testapp"
-                                    {:data "{}"
-                                     :filename "new.json"})))
-               (r/Multipart "/test"
-                            {}
-                            {"content-type" "text/html"}
-                            {}
-                            (fn [{:keys [multipart]}]
-                              (->> multipart
-                                   :file
-                                   :tempfile
-                                   (slurp)
-                                   (assoc (select-keys (:file multipart) [:filename]) :data)
-                                   (build-page "resources/tpl/testapp"))))
-               (r/POST "/test/:filename"
-                            {"content-type" "application/x-www-form-urlencoded"}
-                            {"content-type" "application/json"}
-                            {}
-                            (fn [{:keys [body]}]
-                              (->> body
-                                   :savedata
-                                   (URLDecoder/decode)
-                                   (json/parse-string)))))))
+))
