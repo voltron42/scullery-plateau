@@ -3,8 +3,65 @@
     <head>
         <meta charset="UTF-8">
         <title>Title</title>
+        <style type="text/css">
+            label > input{ /* HIDE RADIO */
+                visibility: hidden; /* Makes input not-clickable */
+                position: absolute; /* Remove input from document flow */
+            }
+            label > input + svg{ /* IMAGE STYLES */
+                cursor:pointer;
+                border:2px solid transparent;
+            }
+                label > input:checked + svg{ /* (RADIO CHECKED) IMAGE STYLES */
+                border:2px solid #666;
+            }
+        </style>
     </head>
     <body>
         <input type="color" onchange="console.log(this.value)"/>
+        <hr/>
+        <div>
+            <h2>Radio Images</h2>
+            <label>
+                <input type="radio" name="my-radio" value="circle"/>
+                <svg width="20" height="20">
+                    <circle r="10" cx="10" cy="10" fill="red" stroke-width="0"/>
+                </svg>
+            </label>
+            <label>
+                <input type="radio" name="my-radio" value="square"/>
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="red" stroke-width="0"/>
+                </svg>
+            </label>
+            <label>
+                <input type="radio" name="my-radio" value="triangle"/>
+                <svg width="20" height="20">
+                    <polygon points="10,0 0,20 20,20" fill="red" stroke-width="0"/>
+                </svg>
+            </label>
+        </div>
+        <hr/>
+        <div>
+            <h2>Checkbox Images</h2>
+            <label>
+                <input type="checkbox" name="my-check" value="circle"/>
+                <svg width="20" height="20">
+                    <circle r="10" cx="10" cy="10" fill="blue" stroke-width="0"/>
+                </svg>
+            </label>
+            <label>
+                <input type="checkbox" name="my-check" value="square"/>
+                <svg width="20" height="20">
+                    <rect width="20" height="20" fill="blue" stroke-width="0"/>
+                </svg>
+            </label>
+            <label>
+                <input type="checkbox" name="my-check" value="triangle"/>
+                <svg width="20" height="20">
+                    <polygon points="10,0 0,20 20,20" fill="blue" stroke-width="0"/>
+                </svg>
+            </label>
+        </div>
     </body>
 </html>
