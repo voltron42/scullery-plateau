@@ -14,6 +14,9 @@
 
 (s/defschema Char-Id (s/constrained s/Str #(re-matches #"char[A-Za-z0-9]{10}" %) 'Char-Id))
 
+(s/defschema GameTime {:value s/Int
+                       :unit (s/enum :Minor-Action :Major-Action :Minute :Hour :Day :Month :Year)})
+
 (s/defschema Score
   (s/enum 1 2 3 4 5))
 
@@ -37,19 +40,26 @@
 
 (s/defschema Prerequisite
   (s/constrained
-    {(s/optional-key :min-lvl) s/Int
+    {(s/optional-key :kin) #{Kin-Id}
+     (s/optional-key :caste) #{Caste-Id}
      (s/optional-key :skill-sets) #{Skill-Set-Id}
      (s/optional-key :skills) #{Skill-Id}}
     not-empty))
 
 (s/defschema Bonus
-  {:check (s/either Check Stat)
+  {:description s/Str
+   :check (s/either Check Stat)
    :value (s/either Score :talent {:talent s/Int} {:level Score} {:talent :level})
-   (s/optional-key :min-lvl) s/Int})
+   (s/optional-key :lvl) s/Int
+   (s/optional-key :invocation) GameTime
+   (s/optional-key :duration) GameTime})
 
-(s/defschema Starting {(s/optional-key :skills) #{Skill-Id}
-                       (s/optional-key :skill-sets) #{Skill-Set-Id}
-                       (s/optional-key :items) #{Item-Id}})
+(s/defschema Starting
+  (s/constrained
+    {(s/optional-key :skills) #{Skill-Id}
+     (s/optional-key :skill-sets) #{Skill-Set-Id}
+     (s/optional-key :items) #{Item-Id}}
+    not-empty))
 
 (s/defschema Kin
   {:id Kin-Id
@@ -70,26 +80,28 @@
    :name s/Str
    :description s/Str
    :type [s/Str]
-   (s/optional-key :min-lvl) s/Int
-   (s/optional-key :prerequisites) #{Prerequisite}
+   (s/optional-key :lvl) s/Int
+   (s/optional-key :prerequisites) Prerequisite
    (s/optional-key :bonuses) #{Bonus}})
 
 (s/defschema Skill-Set
   {:id Skill-Set-Id
    :name s/Str
    :description s/Str
-   (s/optional-key :min-lvl) s/Int
-   (s/optional-key :prerequisites) #{Prerequisite}})
+   (s/optional-key :lvl) s/Int
+   (s/optional-key :prerequisites) Prerequisite})
 
 (s/defschema Item
   {:id Item-Id
    :name s/Str
    :description s/Str
    :type s/Str
-   (s/optional-key :min-lvl) s/Int
-   (s/optional-key :prerequisites) #{Prerequisite}
+   (s/optional-key :lvl) s/Int
+   (s/optional-key :bonded) (s/eq true)
+   (s/optional-key :prerequisites) Prerequisite
    (s/optional-key :bonuses) #{Bonus}
    (s/optional-key :heft) (s/enum :heavy :light)
+   (s/optional-key :time-to-equip) GameTime
    :cost {:value s/Int :unit s/Str}})
 
 (s/defschema Character
