@@ -31,8 +31,8 @@
 (s/defschema Check (s/enum
                      :Push :Pull :Jump :Catch :Throw :Run :Climb :Grab :Hold :Block :Melee-Attack
                      :Balance :Tumble :Dodge :Parry :Range-Attack :Hide
-                     :Resist-Attack :Resist-Poison :Resist-Disease :Heal-Self
-                     :Find :Recall :Learn :Resist-Psychic :Detect-Poison :Detect-Disease :Triage :Cure
+                     :Resist :Heal-Self
+                     :Find :Recall :Learn :Triage :Cure
                      :Look :Smell :Taste :Touch :Hear :Detect-Psychic
                      :Inspire :Sway :Mock :Tame :Lie))
 
