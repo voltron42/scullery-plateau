@@ -66,11 +66,6 @@
 
 (s/defschema Size (s/enum :tiny :small :medium :large :giant :huge :gargantuan))
 
-(s/defschema Damage-Type
-  {:id Damage-Id
-   :name s/Str
-   :description s/Str})
-
 (s/defschema Susceptability
   {:types #{Damage-Id}
    :impact Impact})
@@ -115,6 +110,12 @@
                             :mark s/Int}}
              {(s/enum :edge :burden) All-Checks}
              {(s/cond-pre All-Checks Damage-Id) Effect-Check-Value})})
+
+(s/defschema Damage-Type
+  {:id Damage-Id
+   :name s/Str
+   :critical-effect Effect
+   :description s/Str})
 
 (s/defschema Starting
   (s/constrained
