@@ -97,12 +97,30 @@
   {:score (s/cond-pre Score (s/enum :talent :mastery))
    (s/optional-key :multiplier) (s/cond-pre s/Int :level)})
 
+(comment "
+Effects:
+Apply Damage
+Remove Damage
+Apply Edge / Burden / Bonus for check(s)
+Apply guard / exposure / immunity for certain damage type(s)
+Alter movement *2 / *1/2 / +/-X / 0
+Apply Condition
+Extra Action
+Extra Attack in action
+Off-hand Attack as bonus-action
+
+")
+
 (s/defschema Effect
   {:description s/Str
    (s/optional-key :lvl) s/Int
    (s/optional-key :invocation) GameTime
    (s/optional-key :duration) GameTime
    (s/optional-key :frequency) GameTime
+   :area {:size s/Int
+          :shape (s/enum :Line :Cone :Cube :Column)
+          :targets }
+   :range (s/cond-pre :touch s/Int)
    :target {(s/enum :count :lvl-) s/Int
             :values #{(s/enum :self :ally :opponent)}}
    :effect (s/cond-pre
@@ -224,12 +242,18 @@
    :questions {Question-Id Question-Node}
    :base-line #{Question-Id}})
 
-(s/defschema Position {:x s/Int :y s/Int})
+(s/defschema Position
+  (s/cond-pre
+    {:x s/Int :y s/Int}
+    {:angle s/Int}))
 
 (s/defschema Door
   {:label s/Str
    :description s/Str
-   :to Room-Id})
+   :width (s/enum 1 2)
+   :to Room-Id
+   :out Position
+   (s/optional-key :obstacles) #{Obstacle-Id}})
 
 (s/defschema Room
   {:id Room-Id
@@ -237,7 +261,9 @@
    :description s/Str
    :shape (s/cond-pre
             {:width s/Int :height s/Int}
-            {:points [Position]})
+            {:points [Position]}
+            {:radius s/Int}
+            {:radius-x s/Int :radius-y s/Int :angle s/Int})
    (s/optional-key :doors) #{Door}
    (s/optional-key :contents){Position (s/cond-pre Char-Id NPC-Id Obstacle-Id Item-Id)}})
 
