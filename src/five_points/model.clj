@@ -32,8 +32,11 @@
 
 (s/defschema Question-Id (s/constrained s/Str #(re-matches #"q_[A-Za-z0-9]{10}" %) 'Question-Id))
 
-(s/defschema GameTime {:value s/Int
-                       :unit (s/enum :Minor-Action :Major-Action :Minute :Hour :Day :Month :Year)})
+(s/defschema GameTime
+  (s/cond-pre
+    (s/enum :Reaction :Minor-Action :Action)
+    {:value s/Int
+     :unit (s/enum :Minute :Hour :Day :Month :Year)}))
 
 (s/defschema Score
   (s/enum 1 2 3 4 5))
@@ -64,7 +67,19 @@
 
 (s/defschema Impact (s/enum :immune :guarded :exposed))
 
-(s/defschema Size (s/enum :tiny :small :medium :large :giant :huge :gargantuan))
+(s/defschema Position (s/enum
+                        :two-handed
+                        :head :ear :face :neck :helmet
+                        :chest :sholders :arms :forearms :back
+                        :cloak :cape :robe
+                        :hands :waist :belt
+                        :pants :knees :shins :shoes :boots
+                        :body-armor
+                        :full-armor))
+
+(s/defschema Equipment-Position (s/cond-pre Position (s/enum :one-handed)))
+
+(s/defschema Equipment-Placement (s/cond-pre Position (s/enum :left-hand :right-hand)))
 
 (s/defschema Susceptability
   {:types #{Damage-Id}
@@ -147,7 +162,7 @@ Off-hand Attack as bonus-action
    :name s/Str
    :stats Stats
    :description s/Str
-   (s/optional-key :size) Size
+   (s/optional-key :size) s/Int
    (s/optional-key :starting) Starting})
 
 (s/defschema Caste
@@ -178,8 +193,10 @@ Off-hand Attack as bonus-action
    :name s/Str
    :description s/Str
    :type s/Str
+   :equip Equipment-Position
    (s/optional-key :lvl) s/Int
    (s/optional-key :bonded) (s/eq true)
+   (s/optional-key :usage) :one-time
    (s/optional-key :prerequisites) Prerequisite
    (s/optional-key :effects) #{Effect}
    (s/optional-key :heft) (s/enum :heavy :light)
@@ -194,7 +211,8 @@ Off-hand Attack as bonus-action
    :caste Caste-Id
    :skill-sets #{Skill-Set-Id}
    :skills #{Skill-Id}
-   :items #{Item-Id}})
+   :equipment {Equipment-Placement Item-Id}
+   :inventory #{Item-Id}})
 
 (s/defschema Solution
   {:check All-Checks
