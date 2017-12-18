@@ -1,0 +1,290 @@
+[{:IT1 " "
+  :IT2 " "
+  :IT3 " "
+  :IT4 " "
+  :DMAX 40
+  :xMax 10
+  :xMin -10
+  :yMax 10
+  :yMin -12
+  :L 1}
+ (AxesOff)
+ (ClDrw)
+ (RcPic "TITLE")
+ (Pause)
+ (Menu 1 "New" CAS1 3 "Load" LG1 5 "Quit" END5)
+ (Lbl LG1)
+ (ClLCD)
+ (If (And (= " " :SV1) (= " " :SV2) (= " " :SV3))
+   [(Disp "No games to load.")
+    (Pause)
+    (Goto CAS1)])
+ (Outpt 1 7 "LOADGAME")
+ (Outpt 4 1 :SV1)
+ (Outpt 5 1 :SV2)
+ (Outpt 6 1 :SV3)
+ (Menu 1 :SV1 G1 2 :SV2 G2 3 :SV3 G3)
+ (Lbl G1)
+ {:KN1 :SK1
+  :D :SD1
+  :L :SL1
+  :HP :SH1
+  :MAGIK :SM1
+  :SPEED :SS1
+  :AP :SA1}
+ (Goto CAS2)
+ (Lbl G2)
+ {:KN1 :SK2
+  :D :SD2
+  :L :SL2
+  :HP :SH2
+  :MAGIK :SM2
+  :SPEED :SS2
+  :AP :SA2}
+ (Goto CAS2)
+ (Lbl G3)
+ {:KN1 :SK3
+  :D :SD3
+  :L :SL3
+  :HP :SH3
+  :MAGIK :SM3
+  :SPEED :SS3
+  :AP :SA3}
+ (Goto CAS2)
+ (Lbl CAS1)
+ (ClDrw)
+ {:D 1
+  :RM 29}
+ (ClDrw)
+ (RcPic "KNIGHT1")
+ (Menu 1 "Arthur" CA 2 "Merlin" CM 3 "Gawain" CG 4 "Lancelot" CL)
+ (Lbl CA)
+ {:KN1 "King Arthur"
+  :MAGIK 40
+  :HP 145
+  :SPEED 20
+  :AP 14}
+ (Goto CAS2)
+ (Lbl CM)
+ {:KN1 "Merlin"
+  :MAGIK 250
+  :HP 1140
+  :SPEED 20
+  :AP 8}
+ (Goto CAS2)
+ (Lbl CG)
+ {:KN1 "Gawain"
+  :MAGIK 10
+  :HP 180
+  :SPEED 15
+  :AP 10}
+ (Goto CAS2)
+ (Lbl CL)
+ {:KN1 "Lancelot"
+  :MAGIK 10
+  :HP 150
+  :SPEED 15
+  :AP 12}
+ (Goto CAS2)
+ (Lbl CAS2)
+ (ClLCD)
+ (ClDrw)
+ (Line -10 10 10 10)
+ (Line 10 10 10 -10)
+ (Line 10 -10 -10 -10)
+ (Line -10 -10 -10 10)
+ (Line -10 10 -6 6)
+ (Line -6 6 6 6)
+ (Line 10 10 6 6)
+ (Line 6 6 6 -6)
+ (Line 10 -10 6 -6)
+ (Line -6 -6 -6 6)
+ (Line -10 -10 -6 -6)
+ (Line -6 -6 -6 6)
+ (Line -6 6 -3 3)
+ (Line -6 3 6 3)
+ (Line 6 6 3 3)
+ (Line 3 3 3 -3)
+ (Line 6 -6 3 -3)
+ (Line 6 -3 -6 -3)
+ (Line -3 -3 -3 3)
+ (Line -3 3 -1 1)
+ (Line -1 1 1 1)
+ (Line 3 3 1 1)
+ (Line 1 1 1 -1)
+ (Line 3 -3 1 -1)
+ (Line 1 -1 -1 -1)
+ (Line -3 -3 -1 -1)
+ (Line -1 -1 -1 1)
+ (Line -1 -1 1 1)
+ (Line -1 1 1 -1)
+ (Line 1 0 -1 0)
+ (If (< :D (int (+ 1 (/ (* :DMAX (- 4 :L)) 4))))
+   {:RM 29})
+ (If (>= :D (int (+ 1 (/ (* :DMAX (- 4 :L)) 4))))
+   {:RM 39})
+ (If (>= :D :DMAX)
+   {:RM 49})
+ {:M 1
+  :I 1}
+ (Menu 1 "Go" PRO1 2 "Stat" STATS 3 "Spells" SPELL 4 "Inventory" INVENT 5 "Quit" END2)
+ (Lbl PRO1)
+ {:ML 0
+  :D1 "<"
+  :D2 "^"
+  :D3 ">"
+  :D4 (int (+ 1 (* 4 (rand 1))))}
+ (If (= :D4 1) {:D1 " "})
+ (If (= :D4 2) {:D2 " "})
+ (If (= :D4 3) {:D3 " "})
+ (Menu 2 :D1 MON1 3 :D2 MON2 4 :D3 MON3)
+ (Lbl MON1)
+ {:RDM (+ 2 (* 3 (int (/ (int (rand RM)) 3))))}
+ (Goto MON4)
+ (Lbl MON2)
+ {:RDM (+ 1 (* 3 (int (/ (int (rand RM)) 3))))}
+ (Goto MON4)
+ (Lbl MON3)
+ {:RDM (+ 3 (* 3 (int (/ (int (rand RM)) 3))))}
+ (Goto MON4)
+ (Lbl MON4)
+ (If (<= :RDM 3)
+   (Goto MON6)
+   (If (<= :RDM 10)
+     (Goto MONI)
+     (Goto MONM)))
+ (Lbl MONI)
+ (If (and (>= :RDM 3) (<= :RDM 5))
+   {:TXT1 "Healing herb"})
+ (If (or (= :RDM 6) (= :RDM 7))
+   {:TXT1 "Magic Vial"})
+ (If (or (= :RDM 8) (= :RDM 9))
+   {:TXT1 "Healing potion"})
+ (If (= :RDM 10)
+   {:TXT1 "Magic potion"})
+ (If (<= :RDM 7)
+   {:TXT2 ($ "You've found a " :TXT1 ".")}
+   {:TXT2 ($ "You've found " :TXT1 ".")})
+ (Lbl INVENT4)
+ (ClLCD)
+ (Outpt 1 1 :TXT2)
+ (Menu 1 "Take" TAK 2 "Inventory" INVENT 5 "Go" MON6)
+ (Lbl TAK)
+ (If (= :IT1 " ")
+   {:IT1 :TXT1}
+   (If (= :IT2 " ")
+     {:IT2 :TXT1}
+     (If (= :IT3 " ")
+       {:IT3 :TXT1}
+       (If (= :IT4 " ")
+         {:IT4 :TXT1}
+         [(ClLCD)
+          (Outpt 1 1 "You have no room.")]))))
+ (Goto MON6)
+ (Lbl MONM)
+ {:M 2}
+ (ClLCD)
+ (ClDrw)
+ (If (and (>= :RDM 11) (<= :RDM 17))
+   [(RcPic "BLOB")
+    {:MONSTER "Blob"
+     :MHP 5
+     :MMP 0
+     :MSP 2
+     :MAP 3}])
+ (If (and (>= :RDM 18) (<= :RDM 23))
+   [(RcPic "GHOST")
+    {:MONSTER "Ghost"
+     :MHP 20
+     :MMP 10
+     :MSP 10
+     :MAP 15}])
+ (If (and (>= :RDM 24) (<= :RDM 29))
+   [(RcPic "GOBLIN")
+    {:MONSTER "Goblin"
+     :MHP 15
+     :MMP 0
+     :MSP 15
+     :MAP 10}])
+ (If (and (>= :RDM 30) (<= :RDM 34))
+   [(RcPic "ORC")
+    {:MONSTER "Orc"
+     :MHP 30
+     :MMP 20
+     :MSP 5
+     :MAP 10}])
+ (If (and (>= :RDM 35) (<= :RDM 39))
+   [(RcPic "SHA")
+    {:MONSTER "Black Knight"
+     :MHP 45
+     :MMP 20
+     :MSP 10
+     :MAP 30}])
+ (If (>= :RDM 40)
+   [{:ML 1}
+    (If (= :L 1)
+      [(RcPic "SKU")
+       {:MONSTER "Demon's head"
+        :MHP 80
+        :MMP 25
+        :MSP 30
+        :MAP 50}])
+    (If (= :L 1)
+      [(RcPic "SOR")
+       {:MONSTER "Sorcerer"
+        :MHP 100
+        :MMP 200
+        :MSP 25
+        :MAP 35}])
+    (If (= :L 1)
+      [(RcPic "DRAG")
+       {:MONSTER "Dragon"
+        :MHP 90
+        :MMP 100
+        :MSP 35
+        :MAP 30}])])
+ {:TXT1 ($ "You encounter a      " :MONSTER ".")
+  :ODD3 (+ 1 (int (* 100 (rand))))}
+ (Outpt 2 2 :TXT1)
+ {:MM (+ 1 (int (* 15 (rand))))}
+ (If (<= :MM 10)
+   [(Pause)
+    (Goto MONB)]
+   [(ClLCD)
+    (Outpt 1 1 ($ :MONSTER " catches you off guard"))
+    (Pause)
+    (Goto MONMB)])
+ (Lbl MONB)
+ (DispG)
+ (Menu 1 "Attack" MONA 2 "Run" MONR 3 "Inventory" INVENT 4 "Spells" SPELL 5 "Stat" STATS)
+ (Lbl MONA)
+ (ClLCD)
+ (Disp "You attack.")
+ {:ODD1 (+ 1 (/ :SPEED (int (/ :SPEED 10))))}
+ (Goto MONMA)
+ (Lbl MONR)
+ (ClLCD)
+ (Disp "Run away, coward!")
+ (Pause)
+ (Goto MON6)
+ (Lbl MONMA)
+ {:ODD2 (/ :MSP (+ 1 (int (/ :MSP 10))))}
+ (If (> :ODD3 65)
+   (If (>= :ODD1 :ODD2)
+     [(Disp "Excellent shot!")
+      {:MHP (- :MHP (* :AP 2))
+       :AP2 (* 2 :AP)
+       :Y 3
+       }]
+     [(Disp ($ :MONSTER " dodges."))
+      (Pause)
+      (Goto MONMB)])
+   {:MHP (- :MHP :AP)
+    :AP2 :AP
+    :Y 2})
+ (Outpt :Y 1 ($ :MONSTER "'s HP down by " :AP2))
+ (Pause)
+ (Goto MONMB)
+ (Lbl MONMAS)
+ ()
+ ]
