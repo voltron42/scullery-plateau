@@ -286,5 +286,328 @@
  (Pause)
  (Goto MONMB)
  (Lbl MONMAS)
- ()
- ]
+ (ClLCD)
+ (Disp ($ "You cast " :SPL "."))
+ (If (= :SLP 2)
+   (Outpt 2 1 ($ :MONSTER "'s HP down by " :AP2)))
+ (Pause)
+ (Lbl MONMB)
+ (If (<= :MHP 0) (Goto MON5))
+ (If (<= :MMP 5)
+   {:MRA (+ 1 (int (* 15 (rand))))}
+   {:MRA (+ 1 (int (* 20 (rand))))})
+ (If (<= :MRA 15)
+   (Goto MONMBA)
+   (Goto MONMBS))
+ (Lbl MONMBA)
+ (ClLCD)
+ (Disp (S :MONSTER " attacks!"))
+ (If (< :ODD3 25)
+   (If (> :ODD2 (* 2/3 :ODD1))
+     [(Disp "You're in trouble.")
+      {:HP (- :HP (* 2 :MAP))
+       :MAP2 (* :MAP 2)
+       :Y 3}]
+     [(Disp "You dodge.")
+      (Pause)
+      (Goto MONE)])
+   {:HP (- :HP :MAP)
+    :MAP2 :MAP
+    :Y 2})
+ (Outpt :Y 1 ($ "Your HP is down by " :MAP2 "."))
+ (Pause)
+ (Goto MONE)
+ (Lbl MONMBS)
+ (ClLCD)
+ (If (>= :MMP 20)
+   {:MS (+ 1 (int (* 40 (rand))))}
+   {:MS (+ 1 (int (* 15 (rand))))})
+ (If (<= :MS 5)
+   {:MLP "Heal"
+    :MHP (+ :MHP 5)
+    :MMP (- :MMP 5)})
+ (If (and (> :MS 5) (<= :MS 15))
+   {:MLP "Hurt"
+    :HP (- :HP 5)
+    :MMP (- :MMP 5)})
+ (If (and (> :MS 15) (<= :MS 30))
+   {:MLP "Hurtmore"
+    :HP (- :HP 20)
+    :MMP (- :MMP 20)})
+ (If (> :MS 30)
+   {:MLP "Healmore"
+    :MHP (+ :MHP 20)
+    :MMP (- :MMP 20)})
+ (Outpt 1 1 ($ :MONSTER " casts ":MLP))
+ (If (and (> :MS 5) (<= :MS 30))
+   (Outpt 2 1 ($ "Your HP is down by " :AP2 ".")))
+ (Pause)
+ (Goto MONE)
+ (Lbl MONE)
+ (If (<= :HP 0)
+   (Goto END4)
+   (Goto MONB))
+ (Lbl MON5)
+ (ClLCD)
+ (Disp ($ :MONSTER " is dead."))
+ (Pause)
+ {:HP (+ HP 1 (int (/ :MAP 3)))
+  :MAGIK (+ :MAGIK 1 (int (/ :MSP 3)))}
+ (Lbl MON6)
+ {:D (+ :D 1)}
+ (If (and (= :ML 1) (<= :MHP 0))
+   (Goto END1)
+   (Goto CAS2))
+ (Lbl STATS)
+ (ClLCD)
+ (Outpt 1 1 :KN1)
+ (Outpt 3 1 "Hit points:")
+ (Outpt 3 12 :HP)
+ (Outpt 4 1 "Magic:")
+ (Outpt 4 7 :MAGIK)
+ (Outpt 5 1 "Speed:")
+ (Outpt 5 7 :SPEED)
+ (Outpt 6 1 "Attack points:")
+ (Outpt 6 15 :AP)
+ (Pause)
+ (If (= :M 1) (Goto CAS2))
+ (If (= :M 2) (Goto MONB))
+ (Lbl SPELL)
+ (ClLCD)
+ {:SLL 0}
+ (Outpt 1 13 "Magic: " )
+ (Outpt 1 19 :MAGIK)
+ (Lbl MA1)
+ (Outpt 3 1 "Heal")
+ (Outpt 3 19 5)
+ (Outpt 4 1 "Healmore")
+ (Outpt 4 19 20)
+ (Outpt 5 1 "Hurt")
+ (Outpt 5 19 5)
+ (Outpt 6 1 "Hurtmore")
+ (Outpt 6 19 20)
+ (Outpt 7 1 "Teleport")
+ (Outpt 7 19 15)
+ (Menu 1 "Cast" MA1M 5 "Exit" MA5)
+ (Lbl MA1M)
+ {:SLL 1}
+ (Menu 1 "Heal" HL 2 "Healmore" LM 3 "Hurt" HT 4 "Hurtmore" TM 5 "Teleport" TL)
+ (Lbl HL)
+ {:SPL "Heal"
+  :SLP 1}
+ (If (< :MAGIK 5)
+   [(ClLCD)
+    (Disp "Not enough magic.")
+    (Pause)]
+   {:HP (+ :HP 5)
+    :MAGIK (- :MAGIK 5)})
+ (Goto MA5)
+ (Lbl LM)
+ {:SPL "Healmore"
+  :SLP 1}
+ (If (< :MAGIK 20)
+   [(ClLCD)
+    (Disp "Not enough magic.")
+    (Pause)]
+   {:HP (+ :HP 20)
+    :MAGIK (- :MAGIK 20)})
+ (Goto MA5)
+ (Lbl HT)
+ {:SPL "Hurt"
+  :SLP 1}
+ (If (= :M 2)
+   (If (< :MAGIK 5)
+     [(ClLCD)
+      (Disp "Not enough magic.")
+      (Pause)
+      (Goto MONB)]
+     {:SLP 2
+      :AP2 5
+      :MHP (- :MHP :AP2)
+      :MAGIK (- :MAGIK 5)})
+   [(ClLCD)
+    (Disp "Nothing to hurt.")
+    (Pause)])
+ (Goto MA5)
+ (Lbl TM)
+ {:SPL "Hurtmore"
+  :SLP 1}
+ (If (= :M 2)
+   (If (< :MAGIK 20)
+     [(ClLCD)
+      (Disp "Not enough magic.")
+      (Pause)
+      (Goto MONB)]
+     {:SLP 2
+      :AP2 20
+      :MHP (- :MHP :AP2)
+      :MAGIK (- :MAGIK 20)})
+   [(ClLCD)
+    (Disp "Nothing to hurt.")
+    (Pause)])
+ (Goto MA5)
+ (Lbl TL)
+ {:SPL "Teleport"
+  :SLP 1}
+ (If (< :MAGIK 15)
+   [(ClLCD)
+    (Disp "Not enough magic.")
+    (Pause)]
+   {:D (+ 1 (int (* :DMAX (rand))))
+    :MAGIK (- :MAGIK 15)})
+ (Goto CAS2)
+ (Lbl MA5)
+ (If (= :M 1) (Goto CAS2))
+ (If (= :M 2)
+   (If (= :SLL 0)
+     (Goto MONB)
+     (Goto MONMAS)))
+ (Lbl INVENT)
+ (ClLCD)
+ (Disp :KN1)
+ (Disp "")
+ (Disp :IT1)
+ (Disp :IT2)
+ (Disp :IT3)
+ (Disp :IT4)
+ (Menu 1 "Use" INVENT2 5 "Return" INVENT3 2 "Drop" DROP)
+ (Lbl DROP)
+ (Menu 1 :IT1 DROP1 2 :IT2 DROP2 3 :IT3 DROP3 4 :IT4 DROP4 5 "Exit" INVENT)
+ (Lbl DROP1)
+ {:IT1 :IT2}
+ {:IT2 :IT3}
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto INVENT)
+ (Lbl DROP2)
+ {:IT2 :IT3}
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto INVENT)
+ (Lbl DROP3)
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto INVENT)
+ (Lbl DROP4)
+ {:IT4 " "}
+ (Goto INVENT)
+ (Lbl INVENT2)
+ (Menu 1 :IT1 IT1B 2 :IT2 IT2B 3 :IT3 IT3B 4 :IT4 IT4B 5 "Exit" INVENT)
+ (Lbl IT1B)
+ (If (= :IT1 "Magic vial") {:MAGIK (+ :MAGIK 5)})
+ (If (= :IT1 "Magic potion") {:MAGIK (+ :MAGIK 20)})
+ (If (= :IT1 "Healing herb") {:HP (+ :HP 5)})
+ (If (= :IT1 "Healing potion") {:HP (+ :HP 20)})
+ {:IT1 :IT2}
+ {:IT2 :IT3}
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto IT5)
+ (Lbl IT2B)
+ (If (= :IT2 "Magic vial") {:MAGIK (+ :MAGIK 5)})
+ (If (= :IT2 "Magic potion") {:MAGIK (+ :MAGIK 20)})
+ (If (= :IT2 "Healing herb") {:HP (+ :HP 5)})
+ (If (= :IT2 "Healing potion") {:HP (+ :HP 20)})
+ {:IT2 :IT3}
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto IT5)
+ (Lbl IT3B)
+ (If (= :IT3 "Magic vial") {:MAGIK (+ :MAGIK 5)})
+ (If (= :IT3 "Magic potion") {:MAGIK (+ :MAGIK 20)})
+ (If (= :IT3 "Healing herb") {:HP (+ :HP 5)})
+ (If (= :IT3 "Healing potion") {:HP (+ :HP 20)})
+ {:IT3 :IT4}
+ {:IT4 " "}
+ (Goto IT5)
+ (Lbl IT4B)
+ (If (= :IT4 "Magic vial") {:MAGIK (+ :MAGIK 5)})
+ (If (= :IT4 "Magic potion") {:MAGIK (+ :MAGIK 20)})
+ (If (= :IT4 "Healing herb") {:HP (+ :HP 5)})
+ (If (= :IT4 "Healing potion") {:HP (+ :HP 20)})
+ {:IT4 " "}
+ (Goto IT5)
+ (Lbl IT5)
+ (Goto INVENT)
+ (Lbl INVENT3)
+ (If (and (= :I 1) (= :M 1)) (Goto CAS2))
+ (If (= :I 2) (Goto INVENT4))
+ (If (= :M 2) (Goto MONB))
+ (Lbl END1)
+ (ClLCD)
+ (If (= :L 3) (Goto END3))
+ (Outpt 2 1 ($ "Wow! You defeated Level " :L "!"))
+ {:L (+ 1 :L)}
+ (Outpt 5 1 ($ "Now, onto Level " :L))
+ (Pause)
+ (Goto CAS1)
+ (Lbl END2)
+ (ClLCD)
+ (Disp "SAVEGAME?")
+ (Menu 1 "Yes" SG1A 2 "No" END5)
+ (Lbl SG1A)
+ (ClLCD)
+ (Outpt 1 7 "SAVEGAME")
+ (If (= :SV1 " ")
+   {:SV1A "Game1"}
+   {:SV1A :SV1})
+ (If (= :SV2 " ")
+   {:SV2A "Game2"}
+   {:SV2A :SV2})
+ (If (= :SV3 " ")
+   {:SV3A "Game3"}
+   {:SV3A :SV3})
+ (Outpt 3 1 :SV1A)
+ (Outpt 4 1 :SV2A)
+ (Outpt 5 1 :SV3A)
+ (Menu 1 :SV1A SG1 2 :SV2A SG2 3 :SV3A SG3)
+ (Lbl SG1)
+ (ClLCD)
+ (InpST "Enter Filename" :SV1)
+ {:SD1 :D
+  :SL1 :L
+  :SH1 :HP
+  :SS1 :SPEED
+  :SM1 :MAGIK
+  :SA1 :AP
+  :SK1 :KN1}
+ (Goto END5)
+ (Lbl SG2)
+ (ClLCD)
+ (InpST "Enter Filename" :SV2)
+ {:SD2 :D
+  :SL2 :L
+  :SH2 :HP
+  :SS2 :SPEED
+  :SM2 :MAGIK
+  :SA2 :AP
+  :SK2 :KN1}
+ (Goto END5)
+ (Lbl SG3)
+ (ClLCD)
+ (InpST "Enter Filename" :SV3)
+ {:SD3 :D
+  :SL3 :L
+  :SH3 :HP
+  :SS3 :SPEED
+  :SM3 :MAGIK
+  :SA3 :AP
+  :SK3 :KN1}
+ (Goto END5)
+ (Lbl END3)
+ (ClLCD)
+ (Disp " ")
+ (Disp " ")
+ {:YDON "...And the streets will flow with the blood of the non-believers!"}
+ (Outpt 1 1 :YDON)
+ (Goto END5)
+ (Lbl END4)
+ (ClLCD)
+ (Disp "You are dead.")
+ (Lbl END5)
+ (Pause)
+ (ClDrw)
+ (ZStd)
+ (AxesOn)
+ (ClLCD)
+ (Outpt 4 7 "GAME OVER")]
