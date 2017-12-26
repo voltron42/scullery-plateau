@@ -68,7 +68,7 @@
  (Lbl CM)
  {:KN1 "Merlin"
   :MAGIK 250
-  :HP 1140
+  :HP 140
   :SPEED 20
   :AP 8}
  (Goto CAS2)
@@ -98,7 +98,7 @@
  (Line 10 10 6 6)
  (Line 6 6 6 -6)
  (Line 10 -10 6 -6)
- (Line -6 -6 -6 6)
+ (Line 6 -6 -6 -6)
  (Line -10 -10 -6 -6)
  (Line -6 -6 -6 6)
  (Line -6 6 -3 3)
@@ -229,14 +229,14 @@
         :MMP 25
         :MSP 30
         :MAP 50}])
-    (If (= :L 1)
+    (If (= :L 3)
       [(RcPic "SOR")
        {:MONSTER "Sorcerer"
         :MHP 100
         :MMP 200
         :MSP 25
         :MAP 35}])
-    (If (= :L 1)
+    (If (= :L 2)
       [(RcPic "DRAG")
        {:MONSTER "Dragon"
         :MHP 90
@@ -351,7 +351,7 @@
  (ClLCD)
  (Disp ($ :MONSTER " is dead."))
  (Pause)
- {:HP (+ HP 1 (int (/ :MAP 3)))
+ {:HP (+ :HP 1 (int (/ :MAP 3)))
   :MAGIK (+ :MAGIK 1 (int (/ :MSP 3)))}
  (Lbl MON6)
  {:D (+ :D 1)}
